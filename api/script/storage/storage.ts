@@ -1,11 +1,9 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-import * as q from "q";
 import * as stream from "stream";
 import * as error from "../error";
-
-import Promise = q.Promise;
+import * as Promise from 'bluebird'
 
 export enum ErrorCode {
   ConnectionFailed = 0,
@@ -312,7 +310,7 @@ export class NameResolver {
     };
   }
 
-  public resolveAccessKey(accountId: string, name: string): Promise<AccessKey> {
+  public async resolveAccessKey(accountId: string, name: string): Promise<AccessKey> {
     return this._storage
       .getAccessKeys(accountId)
       .then((accessKeys: AccessKey[]): AccessKey => {
@@ -324,7 +322,7 @@ export class NameResolver {
       .catch(NameResolver.errorMessageOverride(ErrorCode.NotFound, `Access key "${name}" does not exist.`));
   }
 
-  public resolveApp(accountId: string, name: string, permission?: string): Promise<App> {
+  public async resolveApp(accountId: string, name: string, permission?: string): Promise<App> {
     return this._storage
       .getApps(accountId)
       .then((apps: App[]): App => {
@@ -336,7 +334,7 @@ export class NameResolver {
       .catch(NameResolver.errorMessageOverride(ErrorCode.NotFound, `App "${name}" does not exist.`));
   }
 
-  public resolveDeployment(accountId: string, appId: string, name: string): Promise<Deployment> {
+  public async resolveDeployment(accountId: string, appId: string, name: string): Promise<Deployment> {
     return this._storage
       .getDeployments(accountId, appId)
       .then((deployments: Deployment[]): Deployment => {

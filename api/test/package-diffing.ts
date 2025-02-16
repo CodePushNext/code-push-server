@@ -11,7 +11,6 @@ import * as hashUtils from "../script/utils/hash-utils";
 import * as http from "http";
 import * as packageDiffing from "../script/utils/package-diffing";
 import * as path from "path";
-import * as q from "q";
 import * as shortid from "shortid";
 import * as storage from "../script/storage/storage";
 import * as stream from "stream";
@@ -21,7 +20,7 @@ import clone = storage.clone;
 import PackageDiffer = packageDiffing.PackageDiffer;
 import PackageManifest = hashUtils.PackageManifest;
 import Pend = require("pend");
-import Promise = q.Promise;
+import * as Promise from 'bluebird';
 
 describe("Package diffing with JSON storage", () => packageDiffTests(JsonStorage));
 
@@ -131,8 +130,7 @@ function packageDiffTests(StorageType: new (...args: any[]) => storage.Storage):
                           expectedDiffContents.delete(entry.fileName);
 
                           callback(error);
-                        }, callback)
-                        .done();
+                        }, callback);
                     });
                   });
                 })
@@ -211,8 +209,7 @@ function packageDiffTests(StorageType: new (...args: any[]) => storage.Storage):
                           expectedDiffContents.delete(entry.fileName);
 
                           callback(error);
-                        }, callback)
-                        .done();
+                        }, callback);
                     });
                   });
                 })
@@ -254,7 +251,7 @@ function packageDiffTests(StorageType: new (...args: any[]) => storage.Storage):
           packageInfoPromises.push(uploadAndGetPackageInfo(testFilePath));
         });
 
-        return q
+        return Promise
           .all(packageInfoPromises)
           .then((allPackageInfo: PackageInfo[]) => {
             infoList = allPackageInfo;

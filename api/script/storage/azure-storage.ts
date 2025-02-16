@@ -1,11 +1,11 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-import * as q from "q";
 import * as shortid from "shortid";
 import * as stream from "stream";
 import * as storage from "./storage";
 import * as utils from "../utils/common";
+import * as Promise from "bluebird";
 
 import { BlobServiceClient, StorageSharedKeyCredential } from "@azure/storage-blob";
 import {
@@ -167,7 +167,7 @@ export class AzureStorage implements storage.Storage {
 
   private _tableClient: TableClient;
   private _blobService: BlobServiceClient;
-  private _setupPromise: q.Promise<void>;
+  private _setupPromise: Promise<void>;
 
   public constructor(accountName?: string, accountKey?: string) {
     shortid.characters("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_-");
@@ -175,16 +175,16 @@ export class AzureStorage implements storage.Storage {
     this._setupPromise = this.setup(accountName, accountKey);
   }
 
-  public reinitialize(accountName?: string, accountKey?: string): q.Promise<void> {
+  public async reinitialize(accountName?: string, accountKey?: string): Promise<void> {
     console.log("Re-initializing Azure storage");
     return this.setup(accountName, accountKey);
   }
 
-  public checkHealth(): q.Promise<void> {
-    return q.Promise<void>((resolve, reject) => {
+  public async checkHealth(): Promise<void> {
+    return new Promise<void>((resolve, reject) => {
       this._setupPromise
         .then(() => {
-          const tableCheck: q.Promise<void> = q.Promise<void>((tableResolve, tableReject) => {
+          const tableCheck: Promise<void> = new Promise<void>((tableResolve, tableReject) => {
             this._tableClient
               .getEntity(/*partitionKey=*/ "health", /*rowKey=*/ "health")
               .then((entity: any) => {
@@ -199,10 +199,10 @@ export class AzureStorage implements storage.Storage {
               .catch(tableReject);
           });
 
-          const acquisitionBlobCheck: q.Promise<void> = this.blobHealthCheck(AzureStorage.TABLE_NAME);
-          const historyBlobCheck: q.Promise<void> = this.blobHealthCheck(AzureStorage.HISTORY_BLOB_CONTAINER_NAME);
+          const acquisitionBlobCheck: Promise<void> = this.blobHealthCheck(AzureStorage.TABLE_NAME);
+          const historyBlobCheck: Promise<void> = this.blobHealthCheck(AzureStorage.HISTORY_BLOB_CONTAINER_NAME);
 
-          return q.all([tableCheck, acquisitionBlobCheck, historyBlobCheck]);
+          return Promise.all([tableCheck, acquisitionBlobCheck, historyBlobCheck]);
         })
         .then(() => {
           resolve();
@@ -211,7 +211,7 @@ export class AzureStorage implements storage.Storage {
     });
   }
 
-  public addAccount(account: storage.Account): q.Promise<string> {
+  public async addAccount(account: storage.Account): Promise<string> {
     account = storage.clone(account); // pass by value
     account.id = shortid.generate();
 
@@ -236,7 +236,7 @@ export class AzureStorage implements storage.Storage {
       .catch(AzureStorage.azureErrorHandler);
   }
 
-  public getAccount(accountId: string): q.Promise<storage.Account> {
+  public async getAccount(accountId: string): Promise<storage.Account> {
     const address: Pointer = Keys.getAccountAddress(accountId);
 
     return this._setupPromise
@@ -249,7 +249,7 @@ export class AzureStorage implements storage.Storage {
       .catch(AzureStorage.azureErrorHandler);
   }
 
-  public getAccountByEmail(email: string): q.Promise<storage.Account> {
+  public async getAccountByEmail(email: string): Promise<storage.Account> {
     const address: Pointer = Keys.getEmailShortcutAddress(email);
     return this._setupPromise
       .then(() => {
@@ -265,7 +265,7 @@ export class AzureStorage implements storage.Storage {
       });
   }
 
-  public updateAccount(email: string, updateProperties: storage.Account): q.Promise<void> {
+  public async updateAccount(email: string, updateProperties: storage.Account): Promise<void> {
     if (!email) throw new Error("No account email");
     const address: Pointer = Keys.getEmailShortcutAddress(email);
     const updates: any = {
@@ -282,7 +282,7 @@ export class AzureStorage implements storage.Storage {
       .catch(AzureStorage.azureErrorHandler);
   }
 
-  public getAccountIdFromAccessKey(accessKey: string): q.Promise<string> {
+  public async getAccountIdFromAccessKey(accessKey: string): Promise<string> {
     const partitionKey: string = Keys.getShortcutAccessKeyPartitionKey(accessKey);
     const rowKey: string = "";
 
@@ -300,7 +300,7 @@ export class AzureStorage implements storage.Storage {
       .catch(AzureStorage.azureErrorHandler);
   }
 
-  public addApp(accountId: string, app: storage.App): q.Promise<storage.App> {
+  public async addApp(accountId: string, app: storage.App): Promise<storage.App> {
     app = storage.clone(app); // pass by value
     app.id = shortid.generate();
 
@@ -326,7 +326,7 @@ export class AzureStorage implements storage.Storage {
       .catch(AzureStorage.azureErrorHandler);
   }
 
-  public getApps(accountId: string): q.Promise<storage.App[]> {
+  public async getApps(accountId: string): Promise<storage.App[]> {
     return this._setupPromise
       .then(() => {
         return this.getCollectionByHierarchy(accountId);
@@ -341,7 +341,7 @@ export class AzureStorage implements storage.Storage {
       .catch(AzureStorage.azureErrorHandler);
   }
 
-  public getApp(accountId: string, appId: string, keepCollaboratorIds: boolean = false): q.Promise<storage.App> {
+  public async getApp(accountId: string, appId: string, keepCollaboratorIds: boolean = false): Promise<storage.App> {
     return this._setupPromise
       .then(() => {
         return this.retrieveByAppHierarchy(appId);
@@ -352,7 +352,7 @@ export class AzureStorage implements storage.Storage {
       .catch(AzureStorage.azureErrorHandler);
   }
 
-  public removeApp(accountId: string, appId: string): q.Promise<void> {
+  public async removeApp(accountId: string, appId: string): Promise<void> {
     // remove entries for all collaborators account before removing the app
     return this._setupPromise
       .then(() => {
@@ -364,7 +364,7 @@ export class AzureStorage implements storage.Storage {
       .catch(AzureStorage.azureErrorHandler);
   }
 
-  public updateApp(accountId: string, app: storage.App): q.Promise<void> {
+  public async updateApp(accountId: string, app: storage.App): Promise<void> {
     const appId: string = app.id;
     if (!appId) throw new Error("No app id");
 
@@ -375,7 +375,7 @@ export class AzureStorage implements storage.Storage {
       .catch(AzureStorage.azureErrorHandler);
   }
 
-  public transferApp(accountId: string, appId: string, email: string): q.Promise<void> {
+  public async transferApp(accountId: string, appId: string, email: string): Promise<void> {
     let app: storage.App;
     let targetCollaboratorAccountId: string;
     let requestingCollaboratorEmail: string;
@@ -383,11 +383,11 @@ export class AzureStorage implements storage.Storage {
 
     return this._setupPromise
       .then(() => {
-        const getAppPromise: q.Promise<storage.App> = this.getApp(accountId, appId, /*keepCollaboratorIds*/ true);
-        const accountPromise: q.Promise<storage.Account> = this.getAccountByEmail(email);
-        return q.all<any>([getAppPromise, accountPromise]);
+        const getAppPromise: Promise<storage.App> = this.getApp(accountId, appId, /*keepCollaboratorIds*/ true);
+        const accountPromise: Promise<storage.Account> = this.getAccountByEmail(email);
+        return Promise.all([getAppPromise, accountPromise]);
       })
-      .spread((appPromiseResult: storage.App, accountPromiseResult: storage.Account) => {
+      .then(([appPromiseResult, accountPromiseResult]) => {
         targetCollaboratorAccountId = accountPromiseResult.id;
         email = accountPromiseResult.email; // Use the original email stored on the account to ensure casing is consistent
         app = appPromiseResult;
@@ -434,14 +434,14 @@ export class AzureStorage implements storage.Storage {
       .catch(AzureStorage.azureErrorHandler);
   }
 
-  public addCollaborator(accountId: string, appId: string, email: string): q.Promise<void> {
+  public async addCollaborator(accountId: string, appId: string, email: string): Promise<void> {
     return this._setupPromise
       .then(() => {
-        const getAppPromise: q.Promise<storage.App> = this.getApp(accountId, appId, /*keepCollaboratorIds*/ true);
-        const accountPromise: q.Promise<storage.Account> = this.getAccountByEmail(email);
-        return q.all<any>([getAppPromise, accountPromise]);
+        const getAppPromise: Promise<storage.App> = this.getApp(accountId, appId, /*keepCollaboratorIds*/ true);
+        const accountPromise: Promise<storage.Account> = this.getAccountByEmail(email);
+        return Promise.all([getAppPromise, accountPromise]);
       })
-      .spread((app: storage.App, account: storage.Account) => {
+      .then(([app, account]) => {
         // Use the original email stored on the account to ensure casing is consistent
         email = account.email;
         return this.addCollaboratorWithPermissions(accountId, app, email, {
@@ -452,18 +452,18 @@ export class AzureStorage implements storage.Storage {
       .catch(AzureStorage.azureErrorHandler);
   }
 
-  public getCollaborators(accountId: string, appId: string): q.Promise<storage.CollaboratorMap> {
+  public async getCollaborators(accountId: string, appId: string): Promise<storage.CollaboratorMap> {
     return this._setupPromise
       .then(() => {
         return this.getApp(accountId, appId, /*keepCollaboratorIds*/ false);
       })
       .then((app: storage.App) => {
-        return q<storage.CollaboratorMap>(app.collaborators);
+        return new Promise<storage.CollaboratorMap>(app.collaborators);
       })
       .catch(AzureStorage.azureErrorHandler);
   }
 
-  public removeCollaborator(accountId: string, appId: string, email: string): q.Promise<void> {
+  public async removeCollaborator(accountId: string, appId: string, email: string): Promise<void> {
     return this._setupPromise
       .then(() => {
         return this.getApp(accountId, appId, /*keepCollaboratorIds*/ true);
@@ -488,7 +488,7 @@ export class AzureStorage implements storage.Storage {
       .catch(AzureStorage.azureErrorHandler);
   }
 
-  public addDeployment(accountId: string, appId: string, deployment: storage.Deployment): q.Promise<string> {
+  public async addDeployment(accountId: string, appId: string, deployment: storage.Deployment): Promise<string> {
     let deploymentId: string;
     return this._setupPromise
       .then(() => {
@@ -518,7 +518,7 @@ export class AzureStorage implements storage.Storage {
       .catch(AzureStorage.azureErrorHandler);
   }
 
-  public getDeploymentInfo(deploymentKey: string): q.Promise<storage.DeploymentInfo> {
+  public async getDeploymentInfo(deploymentKey: string): Promise<storage.DeploymentInfo> {
     const partitionKey: string = Keys.getShortcutDeploymentKeyPartitionKey(deploymentKey);
     const rowKey: string = Keys.getShortcutDeploymentKeyRowKey();
 
@@ -536,7 +536,7 @@ export class AzureStorage implements storage.Storage {
       .catch(AzureStorage.azureErrorHandler);
   }
 
-  public getPackageHistoryFromDeploymentKey(deploymentKey: string): q.Promise<storage.Package[]> {
+  public async getPackageHistoryFromDeploymentKey(deploymentKey: string): Promise<storage.Package[]> {
     const pointerPartitionKey: string = Keys.getShortcutDeploymentKeyPartitionKey(deploymentKey);
     const pointerRowKey: string = Keys.getShortcutDeploymentKeyRowKey();
 
@@ -552,7 +552,7 @@ export class AzureStorage implements storage.Storage {
       .catch(AzureStorage.azureErrorHandler);
   }
 
-  public getDeployment(accountId: string, appId: string, deploymentId: string): q.Promise<storage.Deployment> {
+  public async getDeployment(accountId: string, appId: string, deploymentId: string): Promise<storage.Deployment> {
     return this._setupPromise
       .then(() => {
         return this.retrieveByAppHierarchy(appId, deploymentId);
@@ -563,7 +563,7 @@ export class AzureStorage implements storage.Storage {
       .catch(AzureStorage.azureErrorHandler);
   }
 
-  public getDeployments(accountId: string, appId: string): q.Promise<storage.Deployment[]> {
+  public async getDeployments(accountId: string, appId: string): Promise<storage.Deployment[]> {
     return this._setupPromise
       .then(() => {
         return this.getCollectionByHierarchy(accountId, appId);
@@ -579,7 +579,7 @@ export class AzureStorage implements storage.Storage {
       .catch(AzureStorage.azureErrorHandler);
   }
 
-  public removeDeployment(accountId: string, appId: string, deploymentId: string): q.Promise<void> {
+  public async removeDeployment(accountId: string, appId: string, deploymentId: string): Promise<void> {
     return this._setupPromise
       .then(() => {
         return this.cleanUpByAppHierarchy(appId, deploymentId);
@@ -590,7 +590,7 @@ export class AzureStorage implements storage.Storage {
       .catch(AzureStorage.azureErrorHandler);
   }
 
-  public updateDeployment(accountId: string, appId: string, deployment: storage.Deployment): q.Promise<void> {
+  public async updateDeployment(accountId: string, appId: string, deployment: storage.Deployment): Promise<void> {
     const deploymentId: string = deployment.id;
     if (!deploymentId) throw new Error("No deployment id");
 
@@ -602,12 +602,12 @@ export class AzureStorage implements storage.Storage {
       .catch(AzureStorage.azureErrorHandler);
   }
 
-  public commitPackage(
+  public async commitPackage(
     accountId: string,
     appId: string,
     deploymentId: string,
     appPackage: storage.Package
-  ): q.Promise<storage.Package> {
+  ): Promise<storage.Package> {
     if (!deploymentId) throw new Error("No deployment id");
     if (!appPackage) throw new Error("No package specified");
 
@@ -651,7 +651,7 @@ export class AzureStorage implements storage.Storage {
       .catch(AzureStorage.azureErrorHandler);
   }
 
-  public clearPackageHistory(accountId: string, appId: string, deploymentId: string): q.Promise<void> {
+  public async clearPackageHistory(accountId: string, appId: string, deploymentId: string): Promise<void> {
     return this._setupPromise
       .then(() => {
         return this.retrieveByAppHierarchy(appId, deploymentId);
@@ -666,7 +666,7 @@ export class AzureStorage implements storage.Storage {
       .catch(AzureStorage.azureErrorHandler);
   }
 
-  public getPackageHistory(accountId: string, appId: string, deploymentId: string): q.Promise<storage.Package[]> {
+  public async getPackageHistory(accountId: string, appId: string, deploymentId: string): Promise<storage.Package[]> {
     return this._setupPromise
       .then(() => {
         return this.getPackageHistoryFromBlob(deploymentId);
@@ -674,7 +674,7 @@ export class AzureStorage implements storage.Storage {
       .catch(AzureStorage.azureErrorHandler);
   }
 
-  public updatePackageHistory(accountId: string, appId: string, deploymentId: string, history: storage.Package[]): q.Promise<void> {
+  public async updatePackageHistory(accountId: string, appId: string, deploymentId: string, history: storage.Package[]): Promise<void> {
     // If history is null or empty array we do not update the package history, use clearPackageHistory for that.
     if (!history || !history.length) {
       throw storage.storageError(storage.ErrorCode.Invalid, "Cannot clear package history from an update operation");
@@ -691,7 +691,7 @@ export class AzureStorage implements storage.Storage {
       .catch(AzureStorage.azureErrorHandler);
   }
 
-  public addBlob(blobId: string, stream: stream.Readable, streamLength: number): q.Promise<string> {
+  public async addBlob(blobId: string, stream: stream.Readable, streamLength: number): Promise<string> {
     return this._setupPromise
       .then(() => {
         return utils.streamToBuffer(stream);
@@ -705,7 +705,7 @@ export class AzureStorage implements storage.Storage {
       .catch(AzureStorage.azureErrorHandler);
   }
 
-  public getBlobUrl(blobId: string): q.Promise<string> {
+  public async getBlobUrl(blobId: string): Promise<string> {
     return this._setupPromise
       .then(() => {
         return this._blobService.getContainerClient(AzureStorage.TABLE_NAME).getBlobClient(blobId).url;
@@ -713,7 +713,7 @@ export class AzureStorage implements storage.Storage {
       .catch(AzureStorage.azureErrorHandler);
   }
 
-  public removeBlob(blobId: string): q.Promise<void> {
+  public async removeBlob(blobId: string): Promise<void> {
     return this._setupPromise
       .then(() => {
         return this._blobService.getContainerClient(AzureStorage.TABLE_NAME).deleteBlob(blobId);
@@ -721,7 +721,7 @@ export class AzureStorage implements storage.Storage {
       .catch(AzureStorage.azureErrorHandler);
   }
 
-  public addAccessKey(accountId: string, accessKey: storage.AccessKey): q.Promise<string> {
+  public async addAccessKey(accountId: string, accessKey: storage.AccessKey): Promise<string> {
     accessKey = storage.clone(accessKey); // pass by value
     accessKey.id = shortid.generate();
 
@@ -742,7 +742,7 @@ export class AzureStorage implements storage.Storage {
       .catch(AzureStorage.azureErrorHandler);
   }
 
-  public getAccessKey(accountId: string, accessKeyId: string): q.Promise<storage.AccessKey> {
+  public async getAccessKey(accountId: string, accessKeyId: string): Promise<storage.AccessKey> {
     const partitionKey: string = Keys.getAccountPartitionKey(accountId);
     const rowKey: string = Keys.getAccessKeyRowKey(accountId, accessKeyId);
     return this._setupPromise
@@ -752,49 +752,47 @@ export class AzureStorage implements storage.Storage {
       .catch(AzureStorage.azureErrorHandler);
   }
 
-  public getAccessKeys(accountId: string): q.Promise<storage.AccessKey[]> {
-    const deferred = q.defer<storage.AccessKey[]>();
+  public async getAccessKeys(accountId: string): Promise<storage.AccessKey[]> {
+    return new Promise((resolve, reject) => {
+      const partitionKey: string = Keys.getAccountPartitionKey(accountId);
+      const rowKey: string = Keys.getHierarchicalAccountRowKey(accountId);
+      const searchKey: string = Keys.getAccessKeyRowKey(accountId);
 
-    const partitionKey: string = Keys.getAccountPartitionKey(accountId);
-    const rowKey: string = Keys.getHierarchicalAccountRowKey(accountId);
-    const searchKey: string = Keys.getAccessKeyRowKey(accountId);
+      // Fetch both the parent account (for error-checking purposes) and the access tokens
+      const query = `PartitionKey eq '${partitionKey}' and (RowKey eq '${rowKey}' or (RowKey gt '${searchKey}' and RowKey lt '${searchKey}~'))`;
+      const options = { queryOptions: { filter: query } };
 
-    // Fetch both the parent account (for error-checking purposes) and the access tokens
-    const query = `PartitionKey eq '${partitionKey}' and (RowKey eq '${rowKey}' or (RowKey gt '${searchKey}' and RowKey lt '${searchKey}~'))`;
-    const options = { queryOptions: { filter: query } };
+      this._setupPromise.then(() => {
+        this._tableClient
+            .listEntities(options)
+            .byPage()
+            .next()
+            .then((response) => {
+              const entities: TableEntity[] = response.value;
+              if (entities.length === 0) {
+                // Reject as 'not found' if we can't even find the parent entity
+                throw storage.storageError(storage.ErrorCode.NotFound);
+              }
 
-    this._setupPromise.then(() => {
-      this._tableClient
-        .listEntities(options)
-        .byPage()
-        .next()
-        .then((response) => {
-          const entities: TableEntity[] = response.value;
-          if (entities.length === 0) {
-            // Reject as 'not found' if we can't even find the parent entity
-            throw storage.storageError(storage.ErrorCode.NotFound);
-          }
+              const objects: storage.AccessKey[] = [];
 
-          const objects: storage.AccessKey[] = [];
+              entities.forEach((entity: any) => {
+                // Don't include the account
+                if (entity.rowKey !== rowKey) {
+                  objects.push(this.unwrap(entity));
+                }
+              });
 
-          entities.forEach((entity: any) => {
-            // Don't include the account
-            if (entity.rowKey !== rowKey) {
-              objects.push(this.unwrap(entity));
-            }
-          });
-
-          deferred.resolve(objects);
-        })
-        .catch((error: any) => {
-          deferred.reject(error);
-        });
-    });
-
-    return deferred.promise;
+              resolve(objects);
+            })
+            .catch((error: any) => {
+              reject(error);
+            });
+      });
+    })
   }
 
-  public removeAccessKey(accountId: string, accessKeyId: string): q.Promise<void> {
+  public async removeAccessKey(accountId: string, accessKeyId: string): Promise<void> {
     return this._setupPromise
       .then(() => {
         return this.getAccessKey(accountId, accessKeyId);
@@ -804,7 +802,7 @@ export class AzureStorage implements storage.Storage {
         const rowKey: string = Keys.getAccessKeyRowKey(accountId, accessKeyId);
         const shortcutAccessKeyPartitionKey: string = Keys.getShortcutAccessKeyPartitionKey(accessKey.name, false);
 
-        return q.all<any>([
+        return Promise.all<any>([
           this._tableClient.deleteEntity(partitionKey, rowKey),
           this._tableClient.deleteEntity(shortcutAccessKeyPartitionKey, ""),
         ]);
@@ -812,7 +810,7 @@ export class AzureStorage implements storage.Storage {
       .catch(AzureStorage.azureErrorHandler);
   }
 
-  public updateAccessKey(accountId: string, accessKey: storage.AccessKey): q.Promise<void> {
+  public async updateAccessKey(accountId: string, accessKey: storage.AccessKey): Promise<void> {
     if (!accessKey) {
       throw new Error("No access key");
     }
@@ -846,11 +844,11 @@ export class AzureStorage implements storage.Storage {
   }
 
   // No-op for safety, so that we don't drop the wrong db, pending a cleaner solution for removing test data.
-  public dropAll(): q.Promise<void> {
-    return q(<void>null);
+  public async dropAll(): Promise<void> {
+    return null;
   }
 
-  private setup(accountName?: string, accountKey?: string): q.Promise<void> {
+  private async setup(accountName?: string, accountKey?: string): Promise<void> {
     let tableServiceClient: TableServiceClient;
     let tableClient: TableClient;
     let blobServiceClient: BlobServiceClient;
@@ -894,14 +892,14 @@ export class AzureStorage implements storage.Storage {
 
     const tableHealthEntity: any = this.wrap({ health: "health" }, /*partitionKey=*/ "health", /*rowKey=*/ "health");
 
-    return q
+    return Promise
       .all([
         tableServiceClient.createTable(AzureStorage.TABLE_NAME),
         blobServiceClient.createContainer(AzureStorage.TABLE_NAME, { access: "blob" }),
         blobServiceClient.createContainer(AzureStorage.HISTORY_BLOB_CONTAINER_NAME),
       ])
       .then(() => {
-        return q.all<any>([
+        return Promise.all<any>([
           tableClient.createEntity(tableHealthEntity),
           blobServiceClient.getContainerClient(AzureStorage.TABLE_NAME).uploadBlockBlob("health", "health", "health".length),
           blobServiceClient
@@ -916,7 +914,7 @@ export class AzureStorage implements storage.Storage {
         this._blobService = blobServiceClient;
       })
       .catch((error) => {
-        if (error.code == "ContainerAlreadyExists") {
+        if (error.code === "ContainerAlreadyExists") {
           this._tableClient = tableClient;
           this._blobService = blobServiceClient;
         } else {
@@ -925,80 +923,72 @@ export class AzureStorage implements storage.Storage {
       });
   }
 
-  private blobHealthCheck(container: string): q.Promise<void> {
-    const deferred = q.defer<void>();
-
-    this._blobService
-      .getContainerClient(container)
-      .getBlobClient("health")
-      .downloadToBuffer()
-      .then((blobContents: Buffer) => {
-        if (blobContents.toString() !== "health") {
-          deferred.reject(
-            storage.storageError(
-              storage.ErrorCode.ConnectionFailed,
-              "The Azure Blobs service failed the health check for " + container
-            )
-          );
-        } else {
-          deferred.resolve();
-        }
-      })
-      .catch((error: any) => {
-        deferred.reject(error);
-      });
-
-    return deferred.promise;
+  private async blobHealthCheck(container: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+      this._blobService
+          .getContainerClient(container)
+          .getBlobClient("health")
+          .downloadToBuffer()
+          .then((blobContents: Buffer) => {
+            if (blobContents.toString() !== "health") {
+              reject(
+                  storage.storageError(
+                      storage.ErrorCode.ConnectionFailed,
+                      "The Azure Blobs service failed the health check for " + container
+                  )
+              );
+            } else {
+              resolve();
+            }
+          })
+          .catch((error: any) => {
+            reject(error);
+          });
+    })
   }
 
-  private getPackageHistoryFromBlob(blobId: string): q.Promise<storage.Package[]> {
-    const deferred = q.defer<storage.Package[]>();
-
-    this._blobService
-      .getContainerClient(AzureStorage.HISTORY_BLOB_CONTAINER_NAME)
-      .getBlobClient(blobId)
-      .downloadToBuffer()
-      .then((blobContents: Buffer) => {
-        const parsedContents = JSON.parse(blobContents.toString());
-        deferred.resolve(parsedContents);
-      })
-      .catch((error: any) => {
-        deferred.reject(error);
-      });
-
-    return deferred.promise;
+  private async getPackageHistoryFromBlob(blobId: string): Promise<storage.Package[]> {
+    return new Promise((resolve, reject) => {
+      this._blobService
+          .getContainerClient(AzureStorage.HISTORY_BLOB_CONTAINER_NAME)
+          .getBlobClient(blobId)
+          .downloadToBuffer()
+          .then((blobContents: Buffer) => {
+            const parsedContents = JSON.parse(blobContents.toString());
+            resolve(parsedContents);
+          })
+          .catch((error: any) => {
+            reject(error);
+          });
+    })
   }
 
-  private uploadToHistoryBlob(blobId: string, content: string): q.Promise<void> {
-    const deferred = q.defer<void>();
-
-    this._blobService
-      .getContainerClient(AzureStorage.HISTORY_BLOB_CONTAINER_NAME)
-      .uploadBlockBlob(blobId, content, content.length)
-      .then(() => {
-        deferred.resolve();
-      })
-      .catch((error: any) => {
-        deferred.reject(error);
-      });
-
-    return deferred.promise;
+  private async uploadToHistoryBlob(blobId: string, content: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+      this._blobService
+          .getContainerClient(AzureStorage.HISTORY_BLOB_CONTAINER_NAME)
+          .uploadBlockBlob(blobId, content, content.length)
+          .then(() => {
+            resolve();
+          })
+          .catch((error: any) => {
+            reject(error);
+          });
+    })
   }
 
-  private deleteHistoryBlob(blobId: string): q.Promise<void> {
-    const deferred = q.defer<void>();
-
-    this._blobService
-      .getContainerClient(AzureStorage.HISTORY_BLOB_CONTAINER_NAME)
-      .deleteBlob(blobId)
-      .then(() => {
-        deferred.resolve();
-      })
-      .catch((error: any) => {
-        deferred.reject(error);
-      });
-
-    return deferred.promise;
+  private async deleteHistoryBlob(blobId: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+      this._blobService
+          .getContainerClient(AzureStorage.HISTORY_BLOB_CONTAINER_NAME)
+          .deleteBlob(blobId)
+          .then(() => {
+            resolve();
+          })
+          .catch((error: any) => {
+            reject(error);
+          });
+    })
   }
 
   private wrap(jsObject: any, partitionKey: string, rowKey: string): any {
@@ -1021,12 +1011,12 @@ export class AzureStorage implements storage.Storage {
     return unwrapped;
   }
 
-  private addCollaboratorWithPermissions(
+  private async addCollaboratorWithPermissions(
     accountId: string,
     app: storage.App,
     email: string,
     collabProperties: storage.CollaboratorProperties
-  ): q.Promise<void> {
+  ): Promise<void> {
     if (app && app.collaborators && !app.collaborators[email]) {
       app.collaborators[email] = collabProperties;
       return this.updateAppWithPermission(accountId, app, /*updateCollaborator*/ true).then(() => {
@@ -1037,66 +1027,62 @@ export class AzureStorage implements storage.Storage {
     }
   }
 
-  private addAppPointer(accountId: string, appId: string): q.Promise<void> {
-    const deferred = q.defer<void>();
+  private async addAppPointer(accountId: string, appId: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const appPartitionKey: string = Keys.getAppPartitionKey(appId);
+      const appRowKey: string = Keys.getHierarchicalAppRowKey(appId);
+      const pointer: Pointer = { partitionKeyPointer: appPartitionKey, rowKeyPointer: appRowKey };
 
-    const appPartitionKey: string = Keys.getAppPartitionKey(appId);
-    const appRowKey: string = Keys.getHierarchicalAppRowKey(appId);
-    const pointer: Pointer = { partitionKeyPointer: appPartitionKey, rowKeyPointer: appRowKey };
+      const accountPartitionKey: string = Keys.getAccountPartitionKey(accountId);
+      const accountRowKey: string = Keys.getHierarchicalAccountRowKey(accountId, appId);
 
-    const accountPartitionKey: string = Keys.getAccountPartitionKey(accountId);
-    const accountRowKey: string = Keys.getHierarchicalAccountRowKey(accountId, appId);
-
-    const entity: any = this.wrap(pointer, accountPartitionKey, accountRowKey);
-    this._tableClient
-      .createEntity(entity)
-      .then(() => {
-        deferred.resolve();
-      })
-      .catch((error: any) => {
-        deferred.reject(error);
-      });
-
-    return deferred.promise;
+      const entity: any = this.wrap(pointer, accountPartitionKey, accountRowKey);
+      this._tableClient
+          .createEntity(entity)
+          .then(() => {
+            resolve();
+          })
+          .catch((error: any) => {
+            reject(error);
+          });
+    })
   }
 
-  private removeAppPointer(accountId: string, appId: string): q.Promise<void> {
-    const deferred = q.defer<void>();
+  private async removeAppPointer(accountId: string, appId: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const accountRowKey: string = Keys.getHierarchicalAccountRowKey(accountId, appId);
+      const accountPartitionKey: string = Keys.getAccountPartitionKey(accountId);
 
-    const accountPartitionKey: string = Keys.getAccountPartitionKey(accountId);
-    const accountRowKey: string = Keys.getHierarchicalAccountRowKey(accountId, appId);
-
-    this._tableClient
-      .deleteEntity(accountPartitionKey, accountRowKey)
-      .then(() => {
-        deferred.resolve();
-      })
-      .catch((error: any) => {
-        deferred.reject(error);
-      });
-
-    return deferred.promise;
+      this._tableClient
+          .deleteEntity(accountPartitionKey, accountRowKey)
+          .then(() => {
+            resolve();
+          })
+          .catch((error: any) => {
+            reject(error);
+          });
+    })
   }
 
-  private removeAllCollaboratorsAppPointers(accountId: string, appId: string): q.Promise<void> {
+  private async removeAllCollaboratorsAppPointers(accountId: string, appId: string): Promise<void> {
     return this.getApp(accountId, appId, /*keepCollaboratorIds*/ true)
       .then((app: storage.App) => {
         const collaboratorMap: storage.CollaboratorMap = app.collaborators;
         const requesterEmail: string = AzureStorage.getEmailForAccountId(collaboratorMap, accountId);
 
-        const removalPromises: q.Promise<void>[] = [];
+        const removalPromises: Promise<void>[] = [];
 
         Object.keys(collaboratorMap).forEach((key: string) => {
           const collabProperties: storage.CollaboratorProperties = collaboratorMap[key];
           removalPromises.push(this.removeAppPointer(collabProperties.accountId, app.id));
         });
 
-        return q.allSettled(removalPromises);
+        return Promise.all(removalPromises);
       })
       .then(() => { });
   }
 
-  private updateAppWithPermission(accountId: string, app: storage.App, updateCollaborator: boolean = false): q.Promise<void> {
+  private async updateAppWithPermission(accountId: string, app: storage.App, updateCollaborator: boolean = false): Promise<void> {
     const appId: string = app.id;
     if (!appId) throw new Error("No app id");
 
@@ -1104,7 +1090,7 @@ export class AzureStorage implements storage.Storage {
     return this.mergeByAppHierarchy(flatApp, appId);
   }
 
-  private insertByAppHierarchy(jsObject: Object, appId: string, deploymentId?: string): Promise<string> {
+  private async insertByAppHierarchy(jsObject: Object, appId: string, deploymentId?: string): Promise<string> {
     const leafId: string = arguments[arguments.length - 1];
     const appPartitionKey: string = Keys.getAppPartitionKey(appId);
 
@@ -1132,27 +1118,25 @@ export class AzureStorage implements storage.Storage {
       });
   }
 
-  private insertAccessKey(accessKey: storage.AccessKey, accountId: string): q.Promise<string> {
+  private async insertAccessKey(accessKey: storage.AccessKey, accountId: string): Promise<string> {
     accessKey = storage.clone(accessKey);
     accessKey.name = utils.hashWithSHA256(accessKey.name);
 
-    const deferred = q.defer<string>();
+    return new Promise((resolve, reject) => {
+      const partitionKey: string = Keys.getAccountPartitionKey(accountId);
+      const rowKey: string = Keys.getAccessKeyRowKey(accountId, accessKey.id);
 
-    const partitionKey: string = Keys.getAccountPartitionKey(accountId);
-    const rowKey: string = Keys.getAccessKeyRowKey(accountId, accessKey.id);
+      const entity: any = this.wrap(accessKey, partitionKey, rowKey);
 
-    const entity: any = this.wrap(accessKey, partitionKey, rowKey);
-
-    this._tableClient
-      .createEntity(entity)
-      .then(() => {
-        deferred.resolve(accessKey.id);
-      })
-      .catch((error: any) => {
-        deferred.reject(error);
-      });
-
-    return deferred.promise;
+      this._tableClient
+          .createEntity(entity)
+          .then(() => {
+            resolve(accessKey.id);
+          })
+          .catch((error: any) => {
+            reject(error);
+          });
+    })
   }
 
   private retrieveByKey(partitionKey: string, rowKey: string): any {
@@ -1161,7 +1145,7 @@ export class AzureStorage implements storage.Storage {
     });
   }
 
-  private retrieveByAppHierarchy(appId: string, deploymentId?: string): q.Promise<any> {
+  private async retrieveByAppHierarchy(appId: string, deploymentId?: string): Promise<any> {
     const partitionKey: string = Keys.getAppPartitionKey(appId);
     const rowKey: string = Keys.getHierarchicalAppRowKey(appId, deploymentId);
     return this.retrieveByKey(partitionKey, rowKey);
@@ -1266,36 +1250,32 @@ export class AzureStorage implements storage.Storage {
     return this.wrap(jsObject, partitionKey, rowKey);
   }
 
-  private mergeByAppHierarchy(jsObject: Object, appId: string, deploymentId?: string): q.Promise<void> {
-    const deferred = q.defer<void>();
-
-    const entity: any = this.getEntityByAppHierarchy(jsObject, appId, deploymentId);
-    this._tableClient
-      .updateEntity(entity)
-      .then(() => {
-        deferred.resolve();
-      })
-      .catch((error: any) => {
-        deferred.reject(error);
-      });
-
-    return deferred.promise;
+  private async mergeByAppHierarchy(jsObject: Object, appId: string, deploymentId?: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const entity: any = this.getEntityByAppHierarchy(jsObject, appId, deploymentId);
+      this._tableClient
+          .updateEntity(entity)
+          .then(() => {
+            resolve(undefined);
+          })
+          .catch((error: any) => {
+            reject(error);
+          });
+    })
   }
 
-  private updateByAppHierarchy(jsObject: Object, appId: string, deploymentId?: string): q.Promise<void> {
-    const deferred = q.defer<void>();
-
-    const entity: any = this.getEntityByAppHierarchy(jsObject, appId, deploymentId);
-    this._tableClient
-      .updateEntity(entity)
-      .then(() => {
-        deferred.resolve();
-      })
-      .catch((error: any) => {
-        deferred.reject(error);
-      });
-
-    return deferred.promise;
+  private async updateByAppHierarchy(jsObject: Object, appId: string, deploymentId?: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const entity: any = this.getEntityByAppHierarchy(jsObject, appId, deploymentId);
+      this._tableClient
+          .updateEntity(entity)
+          .then(() => {
+            resolve(undefined);
+          })
+          .catch((error: any) => {
+            reject(error);
+          });
+    })
   }
 
   private getNextLabel(packageHistory: storage.Package[]): string {
@@ -1326,7 +1306,7 @@ export class AzureStorage implements storage.Storage {
       errorMessage = azureError.message;
     }
 
-    if (overrideMessage && overrideCondition == errorCodeRaw) {
+    if (overrideMessage && overrideCondition === errorCodeRaw) {
       errorMessage = overrideValue;
     }
 
