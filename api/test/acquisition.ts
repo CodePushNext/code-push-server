@@ -3,15 +3,13 @@
 
 import * as assert from "assert";
 import * as express from "express";
-import * as q from "q";
 import * as queryString from "querystring";
 import * as request from "supertest";
-import Promise = q.Promise;
-
 import * as defaultServer from "../script/default-server";
 import * as storage from "../script/storage/storage";
 import * as redis from "../script/redis-manager";
 import * as utils from "./utils";
+import * as Promise from "bluebird";
 
 import { AzureStorage } from "../script/storage/azure-storage";
 import { JsonStorage } from "../script/storage/json-storage";
@@ -31,7 +29,7 @@ describe("Acquisition Rest API", () => {
   var redisManager: redis.RedisManager;
   var isAzureServer: boolean;
 
-  before((): q.Promise<void> => {
+  before((): Promise<void> => {
     var useJsonStorage: boolean = !process.env.TEST_AZURE_STORAGE && !process.env.AZURE_ACQUISITION_URL;
 
     return q<void>(null)

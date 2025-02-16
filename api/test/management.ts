@@ -5,7 +5,6 @@ import * as assert from "assert";
 import * as express from "express";
 import * as fs from "fs";
 import * as path from "path";
-import * as q from "q";
 import * as request from "supertest";
 import superagent = require("superagent");
 
@@ -17,6 +16,7 @@ import * as testUtils from "./utils";
 
 import { AzureStorage } from "../script/storage/azure-storage";
 import { JsonStorage } from "../script/storage/json-storage";
+import * as Promise from 'bluebird'
 
 import Permissions = storage.Permissions;
 
@@ -46,28 +46,26 @@ function managementTests(useJsonStorage?: boolean): void {
   var packageHash: string = "99fb948da846f4ae552b6bd73ac1e12e4ae3a889159d607997a4aef4f197e7bb"; // resources/blob.zip
   var isTestingMetrics: boolean = !!(process.env.REDIS_HOST && process.env.REDIS_PORT);
 
-  before((): q.Promise<void> => {
+  before((): Promise<void> => {
     account = testUtils.makeAccount();
     otherAccount = testUtils.makeAccount();
 
-    return q<void>(null)
+    return Promise.resolve(null)
       .then(() => {
         if (process.env.AZURE_MANAGEMENT_URL) {
           serverUrl = process.env.AZURE_MANAGEMENT_URL;
           storage = useJsonStorage ? new JsonStorage() : new AzureStorage();
         } else {
           // use the middleware defined in DefaultServer
-          var deferred: q.Deferred<void> = q.defer<void>();
+          return new Promise<void>((resolve, reject) => {
+            defaultServer.start(function (err: Error, app: express.Express, serverStorage: storage.Storage) {
+              if (err) reject(err);
 
-          defaultServer.start(function (err: Error, app: express.Express, serverStorage: storage.Storage) {
-            if (err) deferred.reject(err);
-
-            server = app;
-            storage = serverStorage;
-            deferred.resolve(<void>null);
-          }, useJsonStorage);
-
-          return deferred.promise;
+              server = app;
+              storage = serverStorage;
+              resolve(<void>null);
+            }, useJsonStorage);
+          })
         }
       })
       .then(() => {
@@ -100,7 +98,7 @@ function managementTests(useJsonStorage?: boolean): void {
       });
   });
 
-  after((): q.Promise<void> => {
+  after((): Promise<void> => {
     return redisManager.close().then(() => {
       if (storage instanceof JsonStorage) {
         return storage.dropAll();

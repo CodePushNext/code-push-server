@@ -73,7 +73,7 @@ class PromisifiedRedisClient {
   public set: (key: string, value: string) => Promise<void> = null;
 
   constructor(redisClient: redis.RedisClient) {
-    this.execBatch = (redisBatchClient: any) => {
+    this.execBatch = (redisBatchClient) => {
       return q.ninvoke<any[]>(redisBatchClient, "exec");
     };
 
