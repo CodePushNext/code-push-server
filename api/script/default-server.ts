@@ -16,6 +16,19 @@ const domain = require("express-domain-middleware");
 import * as express from "express";
 import * as q from "q";
 
+declare global {
+  namespace Express {
+    export interface Session {
+      [key: string]: any;
+    }
+
+    export interface Request {
+      user: any;
+      session?: Session;
+    }
+  }
+}
+
 interface Secret {
   id: string;
   value: string;
@@ -24,8 +37,7 @@ interface Secret {
 function bodyParserErrorHandler(err: any, req: express.Request, res: express.Response, next: Function): void {
   if (err) {
     if (err.message === "invalid json" || (err.name === "SyntaxError" && ~err.stack.indexOf("body-parser"))) {
-      req.body = null;
-      next();
+      res.status(400).send("Invalid JSON");
     } else {
       next(err);
     }
@@ -106,7 +118,7 @@ export function start(done: (err?: any, server?: express.Express, storage?: Stor
 
       // body-parser must be before the Application Insights router.
       app.use(bodyParser.urlencoded({ extended: true }));
-      const jsonOptions: any = { limit: "10kb", strict: true };
+      const jsonOptions: bodyParser.OptionsJson = { limit: "10kb", strict: true };
       if (process.env.LOG_INVALID_JSON_REQUESTS === "true") {
         jsonOptions.verify = (req: express.Request, res: express.Response, buf: Buffer, encoding: string) => {
           if (buf && buf.length) {
@@ -117,7 +129,7 @@ export function start(done: (err?: any, server?: express.Express, storage?: Stor
 
       app.use(bodyParser.json(jsonOptions));
 
-      // If body-parser throws an error, catch it and set the request body to null.
+      // If body-parser throws an error, catch it and return a 400 response.
       app.use(bodyParserErrorHandler);
 
       // Before all other middleware to ensure all requests are tracked.

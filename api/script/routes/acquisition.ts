@@ -47,7 +47,7 @@ function createResponseUsingStorage(
     appVersion: appVersion,
     packageHash: packageHash,
     isCompanion: isCompanion && isCompanion.toLowerCase() === "true",
-    label: String(req.query.label),
+    label: req.query.label && String(req.query.label),
   };
 
   let originalAppVersion: string;

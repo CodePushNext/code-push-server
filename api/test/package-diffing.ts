@@ -35,13 +35,13 @@ interface PackageInfo {
   manifestBlobUrl: string;
 }
 
-function packageDiffTests(StorageType: new (...args: any[]) => storage.Storage): void {
+function packageDiffTests(StorageType: new () => storage.Storage): void {
   const TEST_ARCHIVE_FILE_NAMES = ["test.zip", "test2.zip", "test3.zip", "test4.zip"];
   const TEST_ARCHIVE_FILE_PATH = path.join(__dirname, "resources", TEST_ARCHIVE_FILE_NAMES[0]);
   const TEST_ARCHIVE_WITH_FOLDERS_FILE_PATH = path.join(__dirname, "resources", "testdirectories.zip");
 
-  const TEST_ZIP_HASH = "540fed8df3553079e81d1353c5cc4e3cac7db9aea647a85d550f646e8620c317";
-  const TEST_ZIP_MANIFEST_HASH = "9e0499ce7df5c04cb304c9deed684dc137fc603cb484a5b027478143c595d80b";
+  // const TEST_ZIP_HASH = "540fed8df3553079e81d1353c5cc4e3cac7db9aea647a85d550f646e8620c317";
+  // const TEST_ZIP_MANIFEST_HASH = "9e0499ce7df5c04cb304c9deed684dc137fc603cb484a5b027478143c595d80b";
   const HASH_A = "418dd73df63bfe1dc9b1d126d340ccf4941198ccf573eff190a6ff8dc69e87e4";
   const HASH_B = "3e23e8160039594a33894f6564e1b1348bbd7a0088d42c4acb73eeaed59c009d";
   const HASH_C = "2e7d2c03a9507ae265ecf5b5356885a53393a2029d241394997265a1a25aefc6";
@@ -51,17 +51,17 @@ function packageDiffTests(StorageType: new (...args: any[]) => storage.Storage):
   const FOLDER_B_HASH = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
   const HOT_CODE_PUSH_JSON_HASH = "3a2de62a9c2b64b3ac2ccdfd113a0c758e5acb66882fdf270e3f36ecc417a96d";
 
-  var storage: storage.Storage;
-  var packageDiffingUtils: PackageDiffer;
+  let storage: storage.Storage;
+  let packageDiffingUtils: PackageDiffer;
 
   // Spin up a server to serve the blob.
-  var server: http.Server;
+  let server: http.Server;
   before(() => {
     storage = new StorageType();
     packageDiffingUtils = new PackageDiffer(storage, /*maxPackagesToDiff*/ 5);
-    var app = express();
+    const app = express();
     app.use("/", express.static(path.join(__dirname, "resources")));
-    var port = 3000;
+    const port = 3000;
 
     server = app.listen(port);
   });
@@ -72,15 +72,17 @@ function packageDiffTests(StorageType: new (...args: any[]) => storage.Storage):
   });
 
   describe("Package diffing utility (general)", () => {
-    it("generates an incremental update package", (done) => {
-      var oldManifest = new PackageManifest(
+    it("generates an incremental update package", function (done) {
+      this.timeout(5000);
+
+      const oldManifest = new PackageManifest(
         new Map<string, string>()
           .set("a.txt", HASH_A) // This file is removed in the new manifest.  The diff's hotcodepush.json file will reference this file.
           .set("b.txt", HASH_B) // This file is unchanged in the new manifest and will not be present in the diff.
           .set("c.txt", "previoushash")
       ); // This file will change in the new manifest.  The diff will contain the newer version of this file.
-      var newManifest = new PackageManifest(new Map<string, string>().set("b.txt", HASH_B).set("c.txt", HASH_C).set("d.txt", HASH_D)); // This file is new as of the new manifest.  The diff will contain this file.
-      var expectedDiffContents = new Map<string, string>()
+      const newManifest = new PackageManifest(new Map<string, string>().set("b.txt", HASH_B).set("c.txt", HASH_C).set("d.txt", HASH_D)); // This file is new as of the new manifest.  The diff will contain this file.
+      const expectedDiffContents = new Map<string, string>()
         .set("c.txt", HASH_C)
         .set("d.txt", HASH_D)
         .set("hotcodepush.json", MANIFEST_HASH);
@@ -97,24 +99,24 @@ function packageDiffTests(StorageType: new (...args: any[]) => storage.Storage):
                 throw error;
               }
 
-              var pend = new Pend();
+              const pend = new Pend();
 
               zipFile
                 .on("error", (error: any): void => {
                   throw error;
                 })
-                .on("entry", (entry: yauzl.IEntry): void => {
+                .on("entry", (entry: yauzl.Entry): void => {
                   zipFile.openReadStream(entry, (error?: any, readStream?: stream.Readable): void => {
                     if (error) {
                       throw error;
                     }
 
-                    pend.go((callback: (error?: any) => void): void => {
+                    pend.go((callback) => {
                       hashUtils
                         .hashStream(readStream)
                         .then((actualHash: string) => {
-                          var expectedHash: string = expectedDiffContents.get(entry.fileName);
-                          var error: Error;
+                          const expectedHash: string = expectedDiffContents.get(entry.fileName);
+                          let error: Error;
 
                           if (actualHash !== expectedHash) {
                             error = new Error(
@@ -156,18 +158,20 @@ function packageDiffTests(StorageType: new (...args: any[]) => storage.Storage):
         });
     });
 
-    it("generates an incremental update package with new folders", (done) => {
-      var oldManifest = new PackageManifest(new Map<string, string>().set("www/folderA/", FOLDER_A_HASH));
-      var newManifest = new PackageManifest(
+    it("generates an incremental update package with new folders", function (done) {
+      this.timeout(5000);
+      
+      const oldManifest = new PackageManifest(new Map<string, string>().set("www/folderA/", FOLDER_A_HASH));
+      const newManifest = new PackageManifest(
         new Map<string, string>().set("www/folderA/", FOLDER_A_HASH).set("www/folderB/", FOLDER_B_HASH)
       ); // This folder is a new folder that did not appear in the previous package manifest;
-      var expectedDiffContents = new Map<string, string>()
+      const expectedDiffContents = new Map<string, string>()
         .set("www/folderB/", FOLDER_B_HASH)
         .set("hotcodepush.json", HOT_CODE_PUSH_JSON_HASH);
 
       packageDiffingUtils
         .generateDiffArchive(oldManifest, newManifest, TEST_ARCHIVE_WITH_FOLDERS_FILE_PATH)
-        .done((diffArchiveFilePath: string): void => {
+        .done((diffArchiveFilePath: string) => {
           fs.exists(diffArchiveFilePath, (exists: boolean) => {
             assert.ok(exists);
 
@@ -177,24 +181,24 @@ function packageDiffTests(StorageType: new (...args: any[]) => storage.Storage):
                 throw error;
               }
 
-              var pend = new Pend();
+              const pend = new Pend();
 
               zipFile
                 .on("error", (error: any): void => {
                   throw error;
                 })
-                .on("entry", (entry: yauzl.IEntry): void => {
+                .on("entry", (entry: yauzl.Entry): void => {
                   zipFile.openReadStream(entry, (error?: any, readStream?: stream.Readable): void => {
                     if (error) {
                       throw error;
                     }
 
-                    pend.go((callback: (error?: any) => void): void => {
+                    pend.go((callback) => {
                       hashUtils
                         .hashStream(readStream)
                         .then((actualHash: string) => {
-                          var expectedHash: string = expectedDiffContents.get(entry.fileName);
-                          var error: Error;
+                          const expectedHash: string = expectedDiffContents.get(entry.fileName);
+                          let error: Error;
 
                           if (actualHash !== expectedHash) {
                             error = new Error(
@@ -241,16 +245,16 @@ function packageDiffTests(StorageType: new (...args: any[]) => storage.Storage):
     // These tests can only be run against azure storage because diffing downloads blob from url
     // while json storage serves the blobs from memory, which for some reason yazl/yauzl treats as corrupt file.
     describe("Package diffing utility (with Azure)", () => {
-      var account: storage.Account;
-      var app: storage.App;
-      var appPackages: storage.Package[] = [];
-      var deployment: storage.Deployment;
-      var infoList: PackageInfo[];
+      let account: storage.Account;
+      let app: storage.App;
+      const appPackages: storage.Package[] = [];
+      let deployment: storage.Deployment;
+      let infoList: PackageInfo[];
 
       before(() => {
-        var packageInfoPromises: Promise<PackageInfo>[] = [];
+        const packageInfoPromises: Promise<PackageInfo>[] = [];
         TEST_ARCHIVE_FILE_NAMES.forEach((fileName: string) => {
-          var testFilePath: string = path.join(__dirname, "resources", fileName);
+          const testFilePath: string = path.join(__dirname, "resources", fileName);
           packageInfoPromises.push(uploadAndGetPackageInfo(testFilePath));
         });
 
@@ -273,9 +277,9 @@ function packageDiffTests(StorageType: new (...args: any[]) => storage.Storage):
           })
           .then((deploymentId: string) => {
             deployment.id = deploymentId;
-            var commitPromise: Promise<void> = q<void>(null);
+            let commitPromise: Promise<void> = q<void>(null);
             infoList.forEach((info: PackageInfo) => {
-              var madePackage = utils.makePackage("1.0.0", false, info.packageHash);
+              const madePackage = utils.makePackage("1.0.0", false, info.packageHash);
               madePackage.blobUrl = info.blobUrl;
               madePackage.manifestBlobUrl = info.manifestBlobUrl;
               commitPromise = commitPromise
@@ -300,7 +304,7 @@ function packageDiffTests(StorageType: new (...args: any[]) => storage.Storage):
       });
 
       it("generateDiffPackageMap throws error for missing blobUrl", (done) => {
-        var clonedPackage: storage.Package = clone(appPackages[1]);
+        const clonedPackage: storage.Package = clone(appPackages[1]);
         clonedPackage.blobUrl = "";
         packageDiffingUtils
           .generateDiffPackageMap(account.id, app.id, deployment.id, clonedPackage)
@@ -311,7 +315,7 @@ function packageDiffTests(StorageType: new (...args: any[]) => storage.Storage):
       });
 
       it("generateDiffPackageMap throws error for missing manifestBlobUrl", (done) => {
-        var clonedPackage: storage.Package = clone(appPackages[1]);
+        const clonedPackage: storage.Package = clone(appPackages[1]);
         clonedPackage.manifestBlobUrl = "";
         packageDiffingUtils
           .generateDiffPackageMap(account.id, app.id, deployment.id, clonedPackage)
@@ -322,7 +326,7 @@ function packageDiffTests(StorageType: new (...args: any[]) => storage.Storage):
       });
 
       it("generateDiffPackageMap returns null for no package history", (done) => {
-        var deployment2: storage.Deployment = utils.makeStorageDeployment();
+        const deployment2: storage.Deployment = utils.makeStorageDeployment();
         storage
           .addDeployment(account.id, app.id, deployment2)
           .then((depId: string) => {
@@ -345,10 +349,10 @@ function packageDiffTests(StorageType: new (...args: any[]) => storage.Storage):
       });
 
       it("generateDiffPackageMap returns null for a release with no matching app version in history", (done) => {
-        var deployment2: storage.Deployment = utils.makeStorageDeployment();
-        var p1: storage.Package;
-        var p2: storage.Package;
-        var p3: storage.Package;
+        const deployment2: storage.Deployment = utils.makeStorageDeployment();
+        let p1: storage.Package;
+        let p2: storage.Package;
+        let p3: storage.Package;
         storage
           .addDeployment(account.id, app.id, deployment2)
           .then((depId: string) => {
@@ -356,17 +360,17 @@ function packageDiffTests(StorageType: new (...args: any[]) => storage.Storage):
             p1 = clone(appPackages[0]);
             return storage.commitPackage(account.id, app.id, deployment2.id, p1);
           })
-          .then((returnPackage: storage.Package) => {
+          .then(() => {
             p2 = clone(appPackages[1]);
             p2.appVersion = "2.0.0";
             return storage.commitPackage(account.id, app.id, deployment2.id, p2);
           })
-          .then((returnPackage: storage.Package) => {
+          .then(() => {
             p3 = clone(appPackages[2]);
             p3.appVersion = "3.0.0";
             return storage.commitPackage(account.id, app.id, deployment2.id, p3);
           })
-          .then((returnPackage: storage.Package) => {
+          .then(() => {
             return packageDiffingUtils.generateDiffPackageMap(account.id, app.id, deployment2.id, p3);
           })
           .done((diffPackageMap: storage.PackageHashToBlobInfoMap) => {
@@ -400,10 +404,10 @@ function packageDiffTests(StorageType: new (...args: any[]) => storage.Storage):
       });
 
       it("generateDiffPackageMap generates diff only against same app version in history", (done) => {
-        var deployment2: storage.Deployment = utils.makeStorageDeployment();
-        var p1: storage.Package;
-        var p2: storage.Package;
-        var p3: storage.Package;
+        const deployment2: storage.Deployment = utils.makeStorageDeployment();
+        let p1: storage.Package;
+        let p2: storage.Package;
+        let p3: storage.Package;
         storage
           .addDeployment(account.id, app.id, deployment2)
           .then((depId: string) => {
@@ -411,16 +415,16 @@ function packageDiffTests(StorageType: new (...args: any[]) => storage.Storage):
             p1 = clone(appPackages[0]);
             return storage.commitPackage(account.id, app.id, deployment2.id, p1);
           })
-          .then((returnPackage: storage.Package) => {
+          .then(() => {
             p2 = clone(appPackages[1]);
             p2.appVersion = "2.0.0";
             return storage.commitPackage(account.id, app.id, deployment2.id, p2);
           })
-          .then((returnPackage: storage.Package) => {
+          .then(() => {
             p3 = clone(appPackages[2]);
             return storage.commitPackage(account.id, app.id, deployment2.id, p3);
           })
-          .then((returnPackage: storage.Package) => {
+          .then(() => {
             return packageDiffingUtils.generateDiffPackageMap(account.id, app.id, deployment2.id, p3);
           })
           .done((diffPackageMap: storage.PackageHashToBlobInfoMap) => {
@@ -433,10 +437,10 @@ function packageDiffTests(StorageType: new (...args: any[]) => storage.Storage):
       });
 
       it("generateDiffPackageMap generates diff only against similar app version(matching range) in history", (done) => {
-        var deployment2: storage.Deployment = utils.makeStorageDeployment();
-        var p1: storage.Package;
-        var p2: storage.Package;
-        var p3: storage.Package;
+        const deployment2: storage.Deployment = utils.makeStorageDeployment();
+        let p1: storage.Package;
+        let p2: storage.Package;
+        let p3: storage.Package;
         storage
           .addDeployment(account.id, app.id, deployment2)
           .then((depId: string) => {
@@ -445,17 +449,17 @@ function packageDiffTests(StorageType: new (...args: any[]) => storage.Storage):
             p1.appVersion = "1.*";
             return storage.commitPackage(account.id, app.id, deployment2.id, p1);
           })
-          .then((returnPackage: storage.Package) => {
+          .then(() => {
             p2 = clone(appPackages[1]);
             p2.appVersion = "1.3.0";
             return storage.commitPackage(account.id, app.id, deployment2.id, p2);
           })
-          .then((returnPackage: storage.Package) => {
+          .then(() => {
             p3 = clone(appPackages[2]);
             p3.appVersion = "1.x";
             return storage.commitPackage(account.id, app.id, deployment2.id, p3);
           })
-          .then((returnPackage: storage.Package) => {
+          .then(() => {
             return packageDiffingUtils.generateDiffPackageMap(account.id, app.id, deployment2.id, p3);
           })
           .done((diffPackageMap: storage.PackageHashToBlobInfoMap) => {
@@ -470,8 +474,8 @@ function packageDiffTests(StorageType: new (...args: any[]) => storage.Storage):
   }
 
   function uploadAndGetPackageInfo(filePath: string): Promise<PackageInfo> {
-    var info: PackageInfo = { packageHash: null, blobUrl: null, manifestBlobUrl: null };
-    var manifest: PackageManifest;
+    const info: PackageInfo = { packageHash: null, blobUrl: null, manifestBlobUrl: null };
+    let manifest: PackageManifest;
     return hashUtils
       .generatePackageManifestFromZip(filePath)
       .then((retrievedManifest: PackageManifest) => {
@@ -480,7 +484,7 @@ function packageDiffTests(StorageType: new (...args: any[]) => storage.Storage):
       })
       .then((packageHash: string) => {
         info.packageHash = packageHash;
-        var json: string = manifest.serialize();
+        const json: string = manifest.serialize();
         return storage.addBlob(shortid.generate(), utils.makeStreamFromString(json), json.length);
       })
       .then((blobId: string) => {

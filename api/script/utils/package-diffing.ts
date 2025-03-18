@@ -103,7 +103,7 @@ export class PackageDiffer {
 
   public generateDiffArchive(oldManifest: PackageManifest, newManifest: PackageManifest, newArchiveFilePath: string): Promise<string> {
     return Promise<string>(
-      (resolve: (value?: string | Promise<string>) => void, reject: (reason: any) => void, notify: (progress: any) => void): void => {
+      (resolve, reject): void => {
         if (!oldManifest || !newManifest) {
           resolve(null);
           return;
@@ -122,7 +122,7 @@ export class PackageDiffer {
         const writeStream: stream.Writable = fs.createWriteStream(diffFilePath);
         const diffFile = new yazl.ZipFile();
 
-        diffFile.outputStream.pipe(writeStream).on("close", (): void => {
+        diffFile.outputStream.pipe(writeStream).on("close", () => {
           resolve(diffFilePath);
         });
 
@@ -131,17 +131,20 @@ export class PackageDiffer {
         diffFile.addReadStream(readStream, PackageDiffer.MANIFEST_FILE_NAME);
 
         if (diff.newOrUpdatedEntries.size > 0) {
-          yauzl.open(newArchiveFilePath, (error?: any, zipFile?: yauzl.ZipFile): void => {
+          yauzl.open(newArchiveFilePath, (error?: any, zipFile?: yauzl.ZipFile) => {
             if (error) {
               reject(error);
               return;
             }
 
+            let readStreamCounter = 0; // Counter to track the number of read streams
+            let readStreamError = null; // Error flag for read streams
+
             zipFile
               .on("error", (error: any): void => {
                 reject(error);
               })
-              .on("entry", (entry: yauzl.IEntry): void => {
+              .on("entry", (entry: yauzl.Entry): void => {
                 if (
                   !PackageDiffer.isEntryInMap(entry.fileName, /*hash*/ null, diff.newOrUpdatedEntries, /*requireContentMatch*/ false)
                 ) {
@@ -151,11 +154,7 @@ export class PackageDiffer {
                   diffFile.addEmptyDirectory(entry.fileName);
                   return;
                 }
-
-                let readStreamCounter = 0; // Counter to track the number of read streams
-                let readStreamError = null; // Error flag for read streams
-
-                zipFile.openReadStream(entry, (error?: any, readStream?: stream.Readable): void => {
+                zipFile.openReadStream(entry, (error?: any, readStream?: stream.Readable) => {
                   if (error) {
                     reject(error);
                     return;
@@ -172,24 +171,22 @@ export class PackageDiffer {
                       readStreamCounter--;
                       if (readStreamCounter === 0 && !readStreamError) {
                         // All read streams have completed successfully
-                        resolve();
+                        // diffFile.end();
                       }
                     });
 
                   diffFile.addReadStream(readStream, entry.fileName);
                 });
-
-                zipFile.on("close", (): void => {
-                  if (readStreamCounter === 0) {
-                    // All read streams have completed, no need to wait
-                    if (readStreamError) {
-                      reject(readStreamError);
-                    } else {
-                      diffFile.end();
-                      resolve();
-                    }
+              })
+              .on("close", (): void => {
+                if (readStreamCounter === 0) {
+                  // All read streams have completed, no need to wait
+                  if (readStreamError) {
+                    reject(readStreamError);
+                  } else {
+                    diffFile.end();
                   }
-                });
+                }
               });
           });
         } else {
@@ -201,11 +198,7 @@ export class PackageDiffer {
 
   private uploadDiffArchiveBlob(blobId: string, diffArchiveFilePath: string): Promise<storageTypes.BlobInfo> {
     return Promise<storageTypes.BlobInfo>(
-      (
-        resolve: (value?: storageTypes.BlobInfo | Promise<storageTypes.BlobInfo>) => void,
-        reject: (reason: any) => void,
-        notify: (progress: any) => void
-      ): void => {
+      (resolve, reject): void => {
         fs.stat(diffArchiveFilePath, (err: NodeJS.ErrnoException, stats: fs.Stats): void => {
           if (err) {
             reject(err);
@@ -273,7 +266,7 @@ export class PackageDiffer {
 
   private getManifest(appPackage: storageTypes.Package): Promise<PackageManifest> {
     return Promise<PackageManifest>(
-      (resolve: (manifest: PackageManifest) => void, reject: (error: any) => void, notify: (progress: any) => void): void => {
+      (resolve): void => {
         if (!appPackage || !appPackage.manifestBlobUrl) {
           resolve(null);
           return;
@@ -299,7 +292,7 @@ export class PackageDiffer {
 
   private downloadArchiveFromUrl(url: string): Promise<string> {
     return Promise<string>(
-      (resolve: (value?: string | Promise<string>) => void, reject: (reason: any) => void, notify: (progress: any) => void): void => {
+      (resolve): void => {
         PackageDiffer.ensureWorkDirectoryExists();
 
         const downloadedArchiveFilePath = path.join(

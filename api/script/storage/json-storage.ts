@@ -544,7 +544,11 @@ export class JsonStorage implements storage.Storage {
 
   public getBlobUrl(blobId: string): Promise<string> {
     return this.getBlobServer().then((server: http.Server) => {
-      return server.address() + "/" + blobId;
+      const address = server.address();
+      if (typeof address === "object" && address !== null) {
+        return `http://${address.address}:${address.port}/${blobId}`;
+      }
+      return `http://${address}/${blobId}`;
     });
   }
 
@@ -737,7 +741,7 @@ export class JsonStorage implements storage.Storage {
       });
 
       const deferred: q.Deferred<http.Server> = q.defer<http.Server>();
-      const server: http.Server = app.listen(0, () => {
+      const server: http.Server = app.listen(0, '0.0.0.0', () => {
         deferred.resolve(server);
       });
 
