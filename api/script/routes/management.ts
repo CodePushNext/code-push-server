@@ -26,7 +26,6 @@ import PackageManifest = hashUtils.PackageManifest;
 import tryJSON = require("try-json");
 import rateLimit from "express-rate-limit";
 import { isPrototypePollutionKey } from "../storage/storage";
-import * as Promise from 'bluebird'
 
 const DEFAULT_ACCESS_KEY_EXPIRY = 1000 * 60 * 60 * 24 * 60; // 60 days
 const ACCESS_KEY_MASKING_STRING = "(hidden)";
@@ -946,6 +945,7 @@ export function getManagementRouter(config: ManagementConfig): Router {
           return nameResolver.resolveDeployment(accountId, appId, deploymentName);
         })
         .then((deployment: storageTypes.Deployment): Promise<redis.DeploymentMetrics> => {
+            // @ts-ignore
           return redisManager.getMetricsWithDeploymentKey(deployment.key);
         })
         .then((metrics: redis.DeploymentMetrics) => {
@@ -1151,6 +1151,7 @@ export function getManagementRouter(config: ManagementConfig): Router {
   );
 
   function invalidateCachedPackage(deploymentKey: string): Promise<void> {
+      // @ts-ignore
     return redisManager.invalidateCache(redis.Utilities.getDeploymentKeyHash(deploymentKey));
   }
 

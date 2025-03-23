@@ -15,7 +15,6 @@ import * as restHeaders from "../utils/rest-headers";
 import * as security from "../utils/security";
 import * as storage from "../storage/storage";
 import * as validationUtils from "../utils/validation";
-import * as Promise from 'bluebird'
 
 export interface AuthenticationConfig {
   storage: storage.Storage;

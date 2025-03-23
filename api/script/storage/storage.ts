@@ -3,7 +3,6 @@
 
 import * as stream from "stream";
 import * as error from "../error";
-import * as Promise from 'bluebird'
 
 export enum ErrorCode {
   ConnectionFailed = 0,

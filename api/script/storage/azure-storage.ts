@@ -5,7 +5,7 @@ import * as shortid from "shortid";
 import * as stream from "stream";
 import * as storage from "./storage";
 import * as utils from "../utils/common";
-import * as Promise from "bluebird";
+import * as BPromise from "bluebird";
 
 import { BlobServiceClient, StorageSharedKeyCredential } from "@azure/storage-blob";
 import {
@@ -181,10 +181,10 @@ export class AzureStorage implements storage.Storage {
   }
 
   public async checkHealth(): Promise<void> {
-    return new Promise<void>((resolve, reject) => {
+    return new BPromise<void>((resolve, reject) => {
       this._setupPromise
         .then(() => {
-          const tableCheck: Promise<void> = new Promise<void>((tableResolve, tableReject) => {
+          const tableCheck: Promise<void> = new BPromise<void>((tableResolve, tableReject) => {
             this._tableClient
               .getEntity(/*partitionKey=*/ "health", /*rowKey=*/ "health")
               .then((entity: any) => {
@@ -458,7 +458,7 @@ export class AzureStorage implements storage.Storage {
         return this.getApp(accountId, appId, /*keepCollaboratorIds*/ false);
       })
       .then((app: storage.App) => {
-        return new Promise<storage.CollaboratorMap>(app.collaborators);
+        return new BPromise<storage.CollaboratorMap>((resolve) => resolve(app.collaborators));
       })
       .catch(AzureStorage.azureErrorHandler);
   }
@@ -753,7 +753,7 @@ export class AzureStorage implements storage.Storage {
   }
 
   public async getAccessKeys(accountId: string): Promise<storage.AccessKey[]> {
-    return new Promise((resolve, reject) => {
+    return new BPromise((resolve, reject) => {
       const partitionKey: string = Keys.getAccountPartitionKey(accountId);
       const rowKey: string = Keys.getHierarchicalAccountRowKey(accountId);
       const searchKey: string = Keys.getAccessKeyRowKey(accountId);
@@ -924,7 +924,7 @@ export class AzureStorage implements storage.Storage {
   }
 
   private async blobHealthCheck(container: string): Promise<void> {
-    return new Promise((resolve, reject) => {
+    return new BPromise((resolve, reject) => {
       this._blobService
           .getContainerClient(container)
           .getBlobClient("health")
@@ -948,7 +948,7 @@ export class AzureStorage implements storage.Storage {
   }
 
   private async getPackageHistoryFromBlob(blobId: string): Promise<storage.Package[]> {
-    return new Promise((resolve, reject) => {
+    return new BPromise((resolve, reject) => {
       this._blobService
           .getContainerClient(AzureStorage.HISTORY_BLOB_CONTAINER_NAME)
           .getBlobClient(blobId)
@@ -964,7 +964,7 @@ export class AzureStorage implements storage.Storage {
   }
 
   private async uploadToHistoryBlob(blobId: string, content: string): Promise<void> {
-    return new Promise((resolve, reject) => {
+    return new BPromise((resolve, reject) => {
       this._blobService
           .getContainerClient(AzureStorage.HISTORY_BLOB_CONTAINER_NAME)
           .uploadBlockBlob(blobId, content, content.length)
@@ -978,7 +978,7 @@ export class AzureStorage implements storage.Storage {
   }
 
   private async deleteHistoryBlob(blobId: string): Promise<void> {
-    return new Promise((resolve, reject) => {
+    return new BPromise((resolve, reject) => {
       this._blobService
           .getContainerClient(AzureStorage.HISTORY_BLOB_CONTAINER_NAME)
           .deleteBlob(blobId)
@@ -1028,7 +1028,7 @@ export class AzureStorage implements storage.Storage {
   }
 
   private async addAppPointer(accountId: string, appId: string): Promise<void> {
-    return new Promise((resolve, reject) => {
+    return new BPromise((resolve, reject) => {
       const appPartitionKey: string = Keys.getAppPartitionKey(appId);
       const appRowKey: string = Keys.getHierarchicalAppRowKey(appId);
       const pointer: Pointer = { partitionKeyPointer: appPartitionKey, rowKeyPointer: appRowKey };
@@ -1049,7 +1049,7 @@ export class AzureStorage implements storage.Storage {
   }
 
   private async removeAppPointer(accountId: string, appId: string): Promise<void> {
-    return new Promise((resolve, reject) => {
+    return new BPromise((resolve, reject) => {
       const accountRowKey: string = Keys.getHierarchicalAccountRowKey(accountId, appId);
       const accountPartitionKey: string = Keys.getAccountPartitionKey(accountId);
 
@@ -1122,7 +1122,7 @@ export class AzureStorage implements storage.Storage {
     accessKey = storage.clone(accessKey);
     accessKey.name = utils.hashWithSHA256(accessKey.name);
 
-    return new Promise((resolve, reject) => {
+    return new BPromise((resolve, reject) => {
       const partitionKey: string = Keys.getAccountPartitionKey(accountId);
       const rowKey: string = Keys.getAccessKeyRowKey(accountId, accessKey.id);
 
@@ -1251,7 +1251,7 @@ export class AzureStorage implements storage.Storage {
   }
 
   private async mergeByAppHierarchy(jsObject: Object, appId: string, deploymentId?: string): Promise<void> {
-    return new Promise((resolve, reject) => {
+    return new BPromise((resolve, reject) => {
       const entity: any = this.getEntityByAppHierarchy(jsObject, appId, deploymentId);
       this._tableClient
           .updateEntity(entity)
@@ -1265,7 +1265,7 @@ export class AzureStorage implements storage.Storage {
   }
 
   private async updateByAppHierarchy(jsObject: Object, appId: string, deploymentId?: string): Promise<void> {
-    return new Promise((resolve, reject) => {
+    return new BPromise((resolve, reject) => {
       const entity: any = this.getEntityByAppHierarchy(jsObject, appId, deploymentId);
       this._tableClient
           .updateEntity(entity)

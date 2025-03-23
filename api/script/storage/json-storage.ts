@@ -7,7 +7,7 @@ import * as http from "http";
 import * as stream from "stream";
 
 import * as storage from "./storage";
-import * as Promise from "bluebird";
+import * as BPromise from "bluebird";
 
 import clone = storage.clone;
 import { isPrototypePollutionKey } from "./storage";
@@ -529,7 +529,7 @@ export class JsonStorage implements storage.Storage {
 
   public async addBlob(blobId: string, stream: stream.Readable, streamLength: number): Promise<string> {
     this.blobs[blobId] = "";
-    return new Promise<string>((resolve: (blobId: string) => void) => {
+    return new BPromise<string>((resolve: (blobId: string) => void) => {
       stream
         .on("data", (data: string) => {
           this.blobs[blobId] += data;
@@ -658,7 +658,7 @@ export class JsonStorage implements storage.Storage {
     if (this._blobServerPromise) {
       return this._blobServerPromise.then((server: http.Server) => {
 
-        return new Promise((resolve, reject) => {
+        return new BPromise((resolve, reject) => {
           server.close((err?: Error) => {
             if (err) {
               reject(err);
@@ -740,7 +740,7 @@ export class JsonStorage implements storage.Storage {
         }
       });
 
-      this._blobServerPromise = new Promise((resolve, reject) => {
+      this._blobServerPromise = new BPromise((resolve, reject) => {
         const server: http.Server = app.listen(0, '0.0.0.0', () => {
           resolve(server);
         });

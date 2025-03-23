@@ -16,7 +16,7 @@ import * as yazl from "yazl";
 import * as yauzl from "yauzl";
 import PackageManifest = hashUtils.PackageManifest;
 import request = require("superagent");
-import * as Promise from 'bluebird'
+import * as BPromise from 'bluebird'
 
 interface IArchiveDiff {
   deletedFiles: string[];
@@ -101,7 +101,7 @@ export class PackageDiffer {
   }
 
   public async generateDiffArchive(oldManifest: PackageManifest, newManifest: PackageManifest, newArchiveFilePath: string): Promise<string> {
-    return new Promise<string>(
+    return new BPromise<string>(
       (resolve, reject): void => {
         if (!oldManifest || !newManifest) {
           resolve(null);
@@ -196,7 +196,7 @@ export class PackageDiffer {
   }
 
   private uploadDiffArchiveBlob(blobId: string, diffArchiveFilePath: string): Promise<storageTypes.BlobInfo> {
-    return new Promise<storageTypes.BlobInfo>(
+    return new BPromise<storageTypes.BlobInfo>(
       (
         resolve,
         reject
@@ -266,7 +266,7 @@ export class PackageDiffer {
   }
 
   private getManifest(appPackage: storageTypes.Package): Promise<PackageManifest> {
-    return new Promise<PackageManifest>(
+    return new BPromise<PackageManifest>(
       (resolve): void => {
         if (!appPackage || !appPackage.manifestBlobUrl) {
           resolve(null);
@@ -292,7 +292,7 @@ export class PackageDiffer {
   }
 
   private downloadArchiveFromUrl(url: string): Promise<string> {
-    return new Promise<string>(
+    return new BPromise<string>(
       (resolve): void => {
         PackageDiffer.ensureWorkDirectoryExists();
 

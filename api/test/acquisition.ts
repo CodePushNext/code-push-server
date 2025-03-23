@@ -32,25 +32,22 @@ describe("Acquisition Rest API", () => {
   before((): Promise<void> => {
     const useJsonStorage: boolean = !process.env.TEST_AZURE_STORAGE && !process.env.AZURE_ACQUISITION_URL;
 
-    return new Promise()
-      .then(() => {
+    return new Promise((resolve, reject) => {
         if (process.env.AZURE_ACQUISITION_URL) {
-          serverUrl = process.env.AZURE_ACQUISITION_URL;
-          isAzureServer = true;
-          storageInstance = useJsonStorage ? new JsonStorage() : new AzureStorage();
+            serverUrl = process.env.AZURE_ACQUISITION_URL;
+            isAzureServer = true;
+            storageInstance = useJsonStorage ? new JsonStorage() : new AzureStorage();
         } else {
-            return new Promise((resolve, reject) => {
-                defaultServer.start(function (err: Error, app: express.Express, serverStorage: storage.Storage) {
-                    if (err) {
-                        reject(err);
-                    }
-                    server = app;
-                    storageInstance = serverStorage;
-                    resolve(null);
-                }, useJsonStorage);
-            })
+            defaultServer.start(function (err: Error, app: express.Express, serverStorage: storage.Storage) {
+                if (err) {
+                    reject(err);
+                }
+                server = app;
+                storageInstance = serverStorage;
+                resolve(null);
+            }, useJsonStorage);
         }
-      })
+    })
       .then(() => {
         account = utils.makeAccount();
         return storageInstance.addAccount(account);
@@ -1261,7 +1258,7 @@ describe("Acquisition Rest API", () => {
 
       it("returns 200 and increments the correct counters in Redis if SDK version is unspecified", (done) => {
         function sendReport(statusReport: string): Promise<void> {
-          return Promise<void>((resolve, reject) => {
+          return new Promise<void>((resolve, reject) => {
             request(server || serverUrl)
               .post("/reportStatus/deploy")
               .set("Content-Type", "application/json")
@@ -1335,7 +1332,7 @@ describe("Acquisition Rest API", () => {
 
       it("returns 200 and increments the correct counters in Redis when switching deployment keys if SDK version is >=1.5.2-beta", (done) => {
         function sendReport(statusReport: string): Promise<void> {
-          return Promise<void>((resolve, reject) => {
+          return new Promise<void>((resolve, reject) => {
             request(server || serverUrl)
               .post("/reportStatus/deploy")
               .set("Content-Type", "application/json")
