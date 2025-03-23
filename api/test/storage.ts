@@ -17,7 +17,7 @@ if (process.env.TEST_AZURE_STORAGE) {
 }
 
 function storageTests(StorageType: new (...args: any[]) => storageTypes.Storage, disablePersistence?: boolean) {
-  var storage: storageTypes.Storage;
+  let storage: storageTypes.Storage;
 
   before(() => {
     if (StorageType === AzureStorage) {
@@ -51,7 +51,7 @@ function storageTests(StorageType: new (...args: any[]) => storageTypes.Storage,
 
     if (StorageType === AzureStorage) {
       it("should allow reconfiguring of Azure storage credentials", () => {
-        var azureStorage: AzureStorage = <AzureStorage>storage;
+        const azureStorage: AzureStorage = <AzureStorage>storage;
         return azureStorage
           .reinitialize("wrongaccount", "wrongkey")
           .then(
@@ -72,7 +72,7 @@ function storageTests(StorageType: new (...args: any[]) => storageTypes.Storage,
   });
 
   describe("Access Key", () => {
-    var account: storageTypes.Account;
+    let account: storageTypes.Account;
 
     beforeEach(() => {
       account = utils.makeAccount();
@@ -82,7 +82,7 @@ function storageTests(StorageType: new (...args: any[]) => storageTypes.Storage,
     });
 
     it("can generate an id for an access key", () => {
-      var accessKey: storageTypes.AccessKey = utils.makeStorageAccessKey();
+      const accessKey: storageTypes.AccessKey = utils.makeStorageAccessKey();
 
       return storage.addAccessKey(account.id, accessKey).then((accessKeyId: string): void => {
         assert(accessKeyId);
@@ -90,7 +90,7 @@ function storageTests(StorageType: new (...args: any[]) => storageTypes.Storage,
     });
 
     it("can retrieve an access key by id", () => {
-      var accessKey: storageTypes.AccessKey = utils.makeStorageAccessKey();
+      const accessKey: storageTypes.AccessKey = utils.makeStorageAccessKey();
 
       return storage
         .addAccessKey(account.id, accessKey)
@@ -104,7 +104,7 @@ function storageTests(StorageType: new (...args: any[]) => storageTypes.Storage,
     });
 
     it("can retrieve the account id by the access key name", () => {
-      var accessKey: storageTypes.AccessKey = utils.makeStorageAccessKey();
+      const accessKey: storageTypes.AccessKey = utils.makeStorageAccessKey();
 
       return storage
         .addAccessKey(account.id, accessKey)
@@ -117,7 +117,7 @@ function storageTests(StorageType: new (...args: any[]) => storageTypes.Storage,
     });
 
     it("rejects promise for an invalid id", () => {
-      var accessKey: storageTypes.AccessKey = utils.makeStorageAccessKey();
+      const accessKey: storageTypes.AccessKey = utils.makeStorageAccessKey();
 
       return storage
         .addAccessKey(account.id, accessKey)
@@ -130,7 +130,7 @@ function storageTests(StorageType: new (...args: any[]) => storageTypes.Storage,
     });
 
     it("can retrieve access keys for account", () => {
-      var accessKey: storageTypes.AccessKey = utils.makeStorageAccessKey();
+      const accessKey: storageTypes.AccessKey = utils.makeStorageAccessKey();
 
       return storage
         .addAccessKey(account.id, accessKey)
@@ -145,7 +145,7 @@ function storageTests(StorageType: new (...args: any[]) => storageTypes.Storage,
     });
 
     it("can remove an access key", () => {
-      var accessKey: storageTypes.AccessKey = utils.makeStorageAccessKey();
+      const accessKey: storageTypes.AccessKey = utils.makeStorageAccessKey();
 
       return storage
         .addAccessKey(account.id, accessKey)
@@ -161,7 +161,7 @@ function storageTests(StorageType: new (...args: any[]) => storageTypes.Storage,
     });
 
     it("can update an access key", () => {
-      var accessKey: storageTypes.AccessKey = utils.makeStorageAccessKey();
+      const accessKey: storageTypes.AccessKey = utils.makeStorageAccessKey();
 
       return storage
         .addAccessKey(account.id, accessKey)
@@ -180,19 +180,19 @@ function storageTests(StorageType: new (...args: any[]) => storageTypes.Storage,
     });
 
     it("addAccessKey(...) will not modify the accessKey argument", () => {
-      var accessKey: storageTypes.AccessKey = utils.makeStorageAccessKey();
-      var expectedResult: string = JSON.stringify(accessKey);
+      const accessKey: storageTypes.AccessKey = utils.makeStorageAccessKey();
+      const expectedResult: string = JSON.stringify(accessKey);
 
       return storage.addAccessKey(account.id, accessKey).then((accessKeyId: string): void => {
-        var actualResult: string = JSON.stringify(accessKey);
+        const actualResult: string = JSON.stringify(accessKey);
 
         assert.strictEqual(actualResult, expectedResult);
       });
     });
 
     it("updateAccessKey(...) will not modify the accessKey argument", () => {
-      var accessKey: storageTypes.AccessKey = utils.makeStorageAccessKey();
-      var expectedResult: string;
+      const accessKey: storageTypes.AccessKey = utils.makeStorageAccessKey();
+      let expectedResult: string;
 
       return storage
         .addAccessKey(account.id, accessKey)
@@ -205,7 +205,7 @@ function storageTests(StorageType: new (...args: any[]) => storageTypes.Storage,
           return storage.updateAccessKey(account.id, accessKey);
         })
         .then((): void => {
-          var actualResult: string = JSON.stringify(accessKey);
+          const actualResult: string = JSON.stringify(accessKey);
 
           assert.equal(actualResult, expectedResult);
         });
@@ -220,7 +220,7 @@ function storageTests(StorageType: new (...args: any[]) => storageTypes.Storage,
     });
 
     it("can generate an id for a new account", () => {
-      var account: storageTypes.Account = utils.makeAccount();
+      const account: storageTypes.Account = utils.makeAccount();
 
       return storage.addAccount(account).then((accountId: string) => {
         assert(accountId);
@@ -228,7 +228,7 @@ function storageTests(StorageType: new (...args: any[]) => storageTypes.Storage,
     });
 
     it("can get an account by accountId", () => {
-      var account: storageTypes.Account = utils.makeAccount();
+      const account: storageTypes.Account = utils.makeAccount();
       account.name = "test 456";
 
       return storage
@@ -242,7 +242,7 @@ function storageTests(StorageType: new (...args: any[]) => storageTypes.Storage,
     });
 
     it("can get an account by email", () => {
-      var account: storageTypes.Account = utils.makeAccount();
+      const account: storageTypes.Account = utils.makeAccount();
       account.name = "test 789";
 
       return storage
@@ -256,13 +256,13 @@ function storageTests(StorageType: new (...args: any[]) => storageTypes.Storage,
     });
 
     it("can update an account's provider details", () => {
-      var account: storageTypes.Account = utils.makeAccount();
+      const account: storageTypes.Account = utils.makeAccount();
 
       return storage
         .addAccount(account)
         .then((accountId: string) => {
           account.id = accountId;
-          var updates: any = { gitHubId: "2" };
+          const updates: any = { gitHubId: "2" };
           return storage.updateAccount(account.email, updates);
         })
         .then(() => {
@@ -284,24 +284,24 @@ function storageTests(StorageType: new (...args: any[]) => storageTypes.Storage,
     });
 
     it("addAccount(...) will not modify the account argument", () => {
-      var account: storageTypes.Account = utils.makeAccount();
-      var expectedResult: string = JSON.stringify(account);
+      const account: storageTypes.Account = utils.makeAccount();
+      const expectedResult: string = JSON.stringify(account);
 
       return storage.addAccount(account).then((accountId: string) => {
-        var actualResult: string = JSON.stringify(account);
+        const actualResult: string = JSON.stringify(account);
 
         assert.strictEqual(actualResult, expectedResult);
       });
     });
 
     it("addAccount(...) will not accept duplicate emails even if cased differently", () => {
-      var account: storageTypes.Account = utils.makeAccount();
-      var expectedResult: string = JSON.stringify(account);
+      const account: storageTypes.Account = utils.makeAccount();
+      const expectedResult: string = JSON.stringify(account);
 
       return storage
         .addAccount(account)
         .then((accountId: string) => {
-          var newAccount: storageTypes.Account = utils.makeAccount();
+          const newAccount: storageTypes.Account = utils.makeAccount();
           newAccount.email = account.email.toUpperCase();
           return storage.addAccount(newAccount);
         })
@@ -312,8 +312,8 @@ function storageTests(StorageType: new (...args: any[]) => storageTypes.Storage,
   });
 
   describe("App", () => {
-    var account: storageTypes.Account;
-    var collaboratorNotFoundMessage: string = "The specified e-mail address doesn't represent a registered user";
+    let account: storageTypes.Account;
+    const collaboratorNotFoundMessage: string = "The specified e-mail address doesn't represent a registered user";
 
     beforeEach(() => {
       account = utils.makeAccount();
@@ -324,7 +324,7 @@ function storageTests(StorageType: new (...args: any[]) => storageTypes.Storage,
     });
 
     it("can generate an id for an app", () => {
-      var app: storageTypes.App = utils.makeStorageApp();
+      const app: storageTypes.App = utils.makeStorageApp();
 
       return storage.addApp(account.id, app).then((addedApp: storageTypes.App) => {
         assert(addedApp.id);
@@ -332,7 +332,7 @@ function storageTests(StorageType: new (...args: any[]) => storageTypes.Storage,
     });
 
     it("rejects promise when adding to a non-existent account", () => {
-      var app: storageTypes.App = utils.makeStorageApp();
+      const app: storageTypes.App = utils.makeStorageApp();
 
       return storage.addApp("non-existent", app).then(failOnCallSucceeded, (error: storageTypes.StorageError) => {
         assert.equal(error.code, storageTypes.ErrorCode.NotFound);
@@ -340,7 +340,7 @@ function storageTests(StorageType: new (...args: any[]) => storageTypes.Storage,
     });
 
     it("can retrieve an app by id", () => {
-      var app: storageTypes.App = utils.makeStorageApp();
+      const app: storageTypes.App = utils.makeStorageApp();
       app.name = "my app";
 
       return storage
@@ -354,7 +354,7 @@ function storageTests(StorageType: new (...args: any[]) => storageTypes.Storage,
     });
 
     it("rejects promise for an invalid id", () => {
-      var app: storageTypes.App = utils.makeStorageApp();
+      const app: storageTypes.App = utils.makeStorageApp();
       app.name = "my app";
 
       return storage
@@ -368,7 +368,7 @@ function storageTests(StorageType: new (...args: any[]) => storageTypes.Storage,
     });
 
     it("can retrieve apps for account", () => {
-      var app: storageTypes.App = utils.makeStorageApp();
+      const app: storageTypes.App = utils.makeStorageApp();
       app.name = "my app";
 
       return storage
@@ -395,8 +395,8 @@ function storageTests(StorageType: new (...args: any[]) => storageTypes.Storage,
     });
 
     it("can remove an app", () => {
-      var app: storageTypes.App = utils.makeStorageApp();
-      var deployment: storageTypes.Deployment = utils.makeStorageDeployment();
+      const app: storageTypes.App = utils.makeStorageApp();
+      const deployment: storageTypes.Deployment = utils.makeStorageDeployment();
 
       return storage
         .addApp(account.id, app)
@@ -431,14 +431,14 @@ function storageTests(StorageType: new (...args: any[]) => storageTypes.Storage,
     });
 
     it("can update an app", () => {
-      var app: storageTypes.App = utils.makeStorageApp();
-      var appId: string;
+      const app: storageTypes.App = utils.makeStorageApp();
+      let appId: string;
 
       return storage
         .addApp(account.id, app)
         .then((addedApp: storageTypes.App) => {
           appId = addedApp.id;
-          var updatedApp: storageTypes.App = utils.makeStorageApp();
+          const updatedApp: storageTypes.App = utils.makeStorageApp();
           updatedApp.id = appId;
           updatedApp.name = "updated name";
           return storage.updateApp(account.id, updatedApp);
@@ -452,7 +452,7 @@ function storageTests(StorageType: new (...args: any[]) => storageTypes.Storage,
     });
 
     it("will reject promise when updating non-existent entry", () => {
-      var app: storageTypes.App = utils.makeStorageApp();
+      const app: storageTypes.App = utils.makeStorageApp();
       app.id = "non-existent";
 
       return storage.updateApp(account.id, app).then(failOnCallSucceeded, (error: storageTypes.StorageError) => {
@@ -461,21 +461,21 @@ function storageTests(StorageType: new (...args: any[]) => storageTypes.Storage,
     });
 
     it("addApp(...) will not modify the app argument", () => {
-      var app: storageTypes.App = utils.makeStorageApp();
-      var expectedResult: string = JSON.stringify(app);
+      const app: storageTypes.App = utils.makeStorageApp();
+      const expectedResult: string = JSON.stringify(app);
 
       return storage.addApp(account.id, app).then((addedApp: storageTypes.App) => {
-        var actualResult: string = JSON.stringify(app);
+        const actualResult: string = JSON.stringify(app);
 
         assert.strictEqual(actualResult, expectedResult);
       });
     });
 
     it("updateApp(...) will not modify the app argument", () => {
-      var app: storageTypes.App = utils.makeStorageApp();
-      var appId: string;
-      var updatedApp: storageTypes.App;
-      var expectedResult: string;
+      const app: storageTypes.App = utils.makeStorageApp();
+      let appId: string;
+      let updatedApp: storageTypes.App;
+      let expectedResult: string;
 
       return storage
         .addApp(account.id, app)
@@ -491,16 +491,16 @@ function storageTests(StorageType: new (...args: any[]) => storageTypes.Storage,
           return storage.updateApp(account.id, updatedApp);
         })
         .then(() => {
-          var actualResult: string = JSON.stringify(updatedApp);
+          const actualResult: string = JSON.stringify(updatedApp);
 
           assert.strictEqual(actualResult, expectedResult);
         });
     });
 
     describe("Transfer App", () => {
-      var account2: storageTypes.Account;
-      var account3: storageTypes.Account;
-      var appToTransfer: storageTypes.App;
+      let account2: storageTypes.Account;
+      let account3: storageTypes.Account;
+      let appToTransfer: storageTypes.App;
 
       beforeEach(() => {
         account2 = utils.makeAccount();
@@ -626,9 +626,9 @@ function storageTests(StorageType: new (...args: any[]) => storageTypes.Storage,
     });
 
     describe("Collaborator", () => {
-      var account2: storageTypes.Account;
-      var account3: storageTypes.Account;
-      var appToTransfer: storageTypes.App;
+      let account2: storageTypes.Account;
+      let account3: storageTypes.Account;
+      let appToTransfer: storageTypes.App;
 
       beforeEach(() => {
         account2 = utils.makeAccount();
@@ -701,7 +701,7 @@ function storageTests(StorageType: new (...args: any[]) => storageTypes.Storage,
             return storage.getCollaborators(account2.id, appToTransfer.id);
           })
           .then((collaboratorList: storageTypes.CollaboratorMap) => {
-            var keys: string[] = Object.keys(collaboratorList);
+            const keys: string[] = Object.keys(collaboratorList);
             assert.equal(2, keys.length);
             assert.equal(account2.email, keys[0]);
             assert.equal(account3.email, keys[1]);
@@ -763,8 +763,8 @@ function storageTests(StorageType: new (...args: any[]) => storageTypes.Storage,
   });
 
   describe("Deployment", () => {
-    var account: storageTypes.Account;
-    var app: storageTypes.App;
+    let account: storageTypes.Account;
+    let app: storageTypes.App;
 
     beforeEach(() => {
       account = utils.makeAccount();
@@ -781,7 +781,7 @@ function storageTests(StorageType: new (...args: any[]) => storageTypes.Storage,
     });
 
     it("can add a deployment", () => {
-      var deployment: storageTypes.Deployment = utils.makeStorageDeployment();
+      const deployment: storageTypes.Deployment = utils.makeStorageDeployment();
 
       return storage.addDeployment(account.id, app.id, deployment).then((deploymentId: string) => {
         assert(deploymentId);
@@ -789,7 +789,7 @@ function storageTests(StorageType: new (...args: any[]) => storageTypes.Storage,
     });
 
     it("add deployment creates empty package history", () => {
-      var deployment: storageTypes.Deployment = utils.makeStorageDeployment();
+      const deployment: storageTypes.Deployment = utils.makeStorageDeployment();
 
       return storage
         .addDeployment(account.id, app.id, deployment)
@@ -803,7 +803,7 @@ function storageTests(StorageType: new (...args: any[]) => storageTypes.Storage,
     });
 
     it("rejects promise when adding to a non-existent app", () => {
-      var deployment: storageTypes.Deployment = utils.makeStorageDeployment();
+      const deployment: storageTypes.Deployment = utils.makeStorageDeployment();
 
       return storage
         .addDeployment(account.id, "non-existent", deployment)
@@ -819,7 +819,7 @@ function storageTests(StorageType: new (...args: any[]) => storageTypes.Storage,
     });
 
     it("can get a deployment with an account id & deployment id", () => {
-      var deployment: storageTypes.Deployment = utils.makeStorageDeployment();
+      const deployment: storageTypes.Deployment = utils.makeStorageDeployment();
       deployment.name = "deployment123";
 
       return storage
@@ -833,7 +833,7 @@ function storageTests(StorageType: new (...args: any[]) => storageTypes.Storage,
     });
 
     it("can retrieve deployments for account id & app id", () => {
-      var deployment: storageTypes.Deployment = utils.makeStorageDeployment();
+      const deployment: storageTypes.Deployment = utils.makeStorageDeployment();
       deployment.name = "deployment123";
 
       return storage
@@ -848,7 +848,7 @@ function storageTests(StorageType: new (...args: any[]) => storageTypes.Storage,
     });
 
     it("can retrieve empty deployment list for account", () => {
-      var deployment: storageTypes.Deployment = utils.makeStorageDeployment();
+      const deployment: storageTypes.Deployment = utils.makeStorageDeployment();
       deployment.name = "deployment123";
 
       return storage.getDeployments(account.id, app.id).then((deployments: storageTypes.Deployment[]) => {
@@ -857,7 +857,7 @@ function storageTests(StorageType: new (...args: any[]) => storageTypes.Storage,
     });
 
     it("rejects promise when retrieving by invalid app", () => {
-      var deployment: storageTypes.Deployment = utils.makeStorageDeployment();
+      const deployment: storageTypes.Deployment = utils.makeStorageDeployment();
       deployment.name = "deployment123";
 
       return storage.getDeployments(account.id, "invalid").then(failOnCallSucceeded, (error: storageTypes.StorageError) => {
@@ -866,7 +866,7 @@ function storageTests(StorageType: new (...args: any[]) => storageTypes.Storage,
     });
 
     it("can remove a deployment", () => {
-      var deployment: storageTypes.Deployment = utils.makeStorageDeployment();
+      const deployment: storageTypes.Deployment = utils.makeStorageDeployment();
 
       return storage
         .addDeployment(account.id, app.id, deployment)
@@ -901,14 +901,14 @@ function storageTests(StorageType: new (...args: any[]) => storageTypes.Storage,
     });
 
     it("can update a deployment", () => {
-      var deployment: storageTypes.Deployment = utils.makeStorageDeployment();
-      var deploymentId: string;
+      const deployment: storageTypes.Deployment = utils.makeStorageDeployment();
+      let deploymentId: string;
 
       return storage
         .addDeployment(account.id, app.id, deployment)
         .then((addedDeploymentId: string) => {
           deploymentId = addedDeploymentId;
-          var updatedDeployment: storageTypes.Deployment = utils.makeStorageDeployment();
+          const updatedDeployment: storageTypes.Deployment = utils.makeStorageDeployment();
           updatedDeployment.id = deploymentId;
           updatedDeployment.name = "updated name";
           return storage.updateDeployment(account.id, app.id, updatedDeployment);
@@ -922,7 +922,7 @@ function storageTests(StorageType: new (...args: any[]) => storageTypes.Storage,
     });
 
     it("will reject promise when updating non-existent entry", () => {
-      var deployment: storageTypes.Deployment = utils.makeStorageDeployment();
+      const deployment: storageTypes.Deployment = utils.makeStorageDeployment();
       deployment.id = "non-existent";
 
       return storage.updateDeployment(account.id, app.id, deployment).then(failOnCallSucceeded, (error: storageTypes.StorageError) => {
@@ -931,21 +931,21 @@ function storageTests(StorageType: new (...args: any[]) => storageTypes.Storage,
     });
 
     it("addDeployment(...) will not modify the deployment argument", () => {
-      var deployment: storageTypes.Deployment = utils.makeStorageDeployment();
-      var expectedResult: string = JSON.stringify(deployment);
+      const deployment: storageTypes.Deployment = utils.makeStorageDeployment();
+      const expectedResult: string = JSON.stringify(deployment);
 
       return storage.addDeployment(account.id, app.id, deployment).then((deploymentId: string) => {
-        var actualResult: string = JSON.stringify(deployment);
+        const actualResult: string = JSON.stringify(deployment);
 
         assert.strictEqual(actualResult, expectedResult);
       });
     });
 
     it("updateDeployment(...) will not modify the deployment argument", () => {
-      var deployment: storageTypes.Deployment = utils.makeStorageDeployment();
-      var deploymentId: string;
-      var updatedDeployment: storageTypes.Deployment;
-      var expectedResult: string;
+      const deployment: storageTypes.Deployment = utils.makeStorageDeployment();
+      let deploymentId: string;
+      let updatedDeployment: storageTypes.Deployment;
+      let expectedResult: string;
 
       return storage
         .addDeployment(account.id, app.id, deployment)
@@ -961,7 +961,7 @@ function storageTests(StorageType: new (...args: any[]) => storageTypes.Storage,
           return storage.updateDeployment(account.id, app.id, updatedDeployment);
         })
         .then((): void => {
-          var actualResult: string = JSON.stringify(updatedDeployment);
+          const actualResult: string = JSON.stringify(updatedDeployment);
 
           assert.strictEqual(actualResult, expectedResult);
         });
@@ -969,9 +969,9 @@ function storageTests(StorageType: new (...args: any[]) => storageTypes.Storage,
   });
 
   describe("DeploymentInfo", () => {
-    var account: storageTypes.Account;
-    var app: storageTypes.App;
-    var deployment: storageTypes.Deployment;
+    let account: storageTypes.Account;
+    let app: storageTypes.App;
+    let deployment: storageTypes.Deployment;
 
     beforeEach(() => {
       account = utils.makeAccount();
@@ -1005,11 +1005,11 @@ function storageTests(StorageType: new (...args: any[]) => storageTypes.Storage,
   });
 
   describe("Package", () => {
-    var account: storageTypes.Account;
-    var app: storageTypes.App;
-    var deployment: storageTypes.Deployment;
-    var blobId: string;
-    var blobUrl: string;
+    let account: storageTypes.Account;
+    let app: storageTypes.App;
+    let deployment: storageTypes.Deployment;
+    let blobId: string;
+    let blobUrl: string;
 
     beforeEach(() => {
       account = utils.makeAccount();
@@ -1027,7 +1027,7 @@ function storageTests(StorageType: new (...args: any[]) => storageTypes.Storage,
         })
         .then((deploymentId: string) => {
           deployment.id = deploymentId;
-          var fileContents = "test blob";
+          const fileContents = "test blob";
           return storage.addBlob(shortid.generate(), utils.makeStreamFromString(fileContents), fileContents.length);
         })
         .then((savedBlobId: string) => {
@@ -1046,7 +1046,7 @@ function storageTests(StorageType: new (...args: any[]) => storageTypes.Storage,
     });
 
     it("can add and get a package", () => {
-      var storagePackage: storageTypes.Package = utils.makePackage();
+      const storagePackage: storageTypes.Package = utils.makePackage();
       storagePackage.blobUrl = blobUrl;
       storagePackage.description = "description123";
 
@@ -1069,8 +1069,8 @@ function storageTests(StorageType: new (...args: any[]) => storageTypes.Storage,
     });
 
     it("transferApp still returns history from deploymentKey", () => {
-      var storagePackage: storageTypes.Package = utils.makePackage();
-      var account2: storageTypes.Account = utils.makeAccount();
+      const storagePackage: storageTypes.Package = utils.makePackage();
+      const account2: storageTypes.Account = utils.makeAccount();
       storagePackage.blobUrl = blobUrl;
       storagePackage.description = "description123";
 
@@ -1107,38 +1107,38 @@ function storageTests(StorageType: new (...args: any[]) => storageTypes.Storage,
     }
 
     it("commitPackage(...) will not modify the appPackage argument", () => {
-      var storagePackage: storageTypes.Package = utils.makePackage();
+      const storagePackage: storageTypes.Package = utils.makePackage();
 
       storagePackage.blobUrl = blobUrl;
       storagePackage.description = "description123";
 
-      var expectedResult: string = JSON.stringify(storagePackage);
+      const expectedResult: string = JSON.stringify(storagePackage);
 
       return storage.commitPackage(account.id, app.id, deployment.id, storagePackage).then((): void => {
-        var actualResult: string = JSON.stringify(storagePackage);
+        const actualResult: string = JSON.stringify(storagePackage);
 
         assert.strictEqual(actualResult, expectedResult);
       });
     });
 
     describe("Package history", () => {
-      var expectedPackageHistory: storageTypes.Package[];
+      let expectedPackageHistory: storageTypes.Package[];
 
       beforeEach(() => {
         expectedPackageHistory = [];
-        var promiseChain: Promise<void> = q<void>(null);
-        var packageNumber = 1;
-        for (var i = 1; i <= 3; i++) {
+        let promiseChain: Promise<void> = q<void>(null);
+        let packageNumber = 1;
+        for (let i = 1; i <= 3; i++) {
           promiseChain = promiseChain
             .then(() => {
-              var newPackage: storageTypes.Package = utils.makePackage();
+              const newPackage: storageTypes.Package = utils.makePackage();
               newPackage.blobUrl = blobUrl;
               newPackage.description = shortid.generate();
               expectedPackageHistory.push(newPackage);
               return storage.commitPackage(account.id, app.id, deployment.id, newPackage);
             })
             .then((committedPackage: storageTypes.Package) => {
-              var lastPackage: storageTypes.Package = expectedPackageHistory[expectedPackageHistory.length - 1];
+              const lastPackage: storageTypes.Package = expectedPackageHistory[expectedPackageHistory.length - 1];
               lastPackage.label = "v" + packageNumber++;
               lastPackage.releasedBy = committedPackage.releasedBy;
             });
@@ -1181,7 +1181,7 @@ function storageTests(StorageType: new (...args: any[]) => storageTypes.Storage,
             return storage.updatePackageHistory(account.id, app.id, deployment.id, /*history*/ null);
           })
           .then(failOnCallSucceeded, (error: storageTypes.StorageError) => {
-            assert.equal(error.code, storageTypes.ErrorCode.Other);
+            assert.equal(error.code, storageTypes.ErrorCode.Invalid);
             return storage.getPackageHistory(account.id, app.id, deployment.id);
           })
           .then((actualPackageHistory: storageTypes.Package[]) => {
@@ -1193,7 +1193,7 @@ function storageTests(StorageType: new (...args: any[]) => storageTypes.Storage,
 
   describe("Blob", () => {
     it("can add a blob", () => {
-      var fileContents = "test stream";
+      const fileContents = "test stream";
       return storage
         .addBlob(shortid.generate(), utils.makeStreamFromString(fileContents), fileContents.length)
         .then((blobId: string) => {
@@ -1202,7 +1202,7 @@ function storageTests(StorageType: new (...args: any[]) => storageTypes.Storage,
     });
 
     it("can get a blob url", () => {
-      var fileContents = "test stream";
+      const fileContents = "test stream";
       return storage
         .addBlob(shortid.generate(), utils.makeStreamFromString(fileContents), fileContents.length)
         .then((blobId: string) => {
@@ -1218,8 +1218,8 @@ function storageTests(StorageType: new (...args: any[]) => storageTypes.Storage,
     });
 
     it("can remove a blob", () => {
-      var fileContents = "test stream";
-      var blobId: string;
+      const fileContents = "test stream";
+      let blobId: string;
       return storage
         .addBlob(shortid.generate(), utils.makeStreamFromString(fileContents), fileContents.length)
         .then((id: string) => {

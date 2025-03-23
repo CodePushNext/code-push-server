@@ -17,41 +17,38 @@ import { UpdateCheckRequest } from "../script/types/rest-definitions";
 import { SDK_VERSION_HEADER } from "../script/utils/rest-headers";
 
 describe("Acquisition Rest API", () => {
-  var account: storage.Account;
-  var app: storage.App;
-  var deployment: storage.Deployment;
-  var appPackage: storage.Package;
-  var previousPackageHash: string;
-  var requestParameters: UpdateCheckRequest;
-  var server: express.Express;
-  var serverUrl: string;
-  var storageInstance: storage.Storage;
-  var redisManager: redis.RedisManager;
-  var isAzureServer: boolean;
+  let account: storage.Account;
+  let app: storage.App;
+  let deployment: storage.Deployment;
+  let appPackage: storage.Package;
+  let previousPackageHash: string;
+  let requestParameters: UpdateCheckRequest;
+  let server: express.Express;
+  let serverUrl: string;
+  let storageInstance: storage.Storage;
+  let redisManager: redis.RedisManager;
+  let isAzureServer: boolean;
 
   before((): Promise<void> => {
-    var useJsonStorage: boolean = !process.env.TEST_AZURE_STORAGE && !process.env.AZURE_ACQUISITION_URL;
+    const useJsonStorage: boolean = !process.env.TEST_AZURE_STORAGE && !process.env.AZURE_ACQUISITION_URL;
 
-    return q<void>(null)
+    return new Promise()
       .then(() => {
         if (process.env.AZURE_ACQUISITION_URL) {
           serverUrl = process.env.AZURE_ACQUISITION_URL;
           isAzureServer = true;
           storageInstance = useJsonStorage ? new JsonStorage() : new AzureStorage();
         } else {
-          var deferred: q.Deferred<void> = q.defer<void>();
-
-          defaultServer.start(function (err: Error, app: express.Express, serverStorage: storage.Storage) {
-            if (err) {
-              deferred.reject(err);
-            }
-
-            server = app;
-            storageInstance = serverStorage;
-            deferred.resolve(null);
-          }, useJsonStorage);
-
-          return deferred.promise;
+            return new Promise((resolve, reject) => {
+                defaultServer.start(function (err: Error, app: express.Express, serverStorage: storage.Storage) {
+                    if (err) {
+                        reject(err);
+                    }
+                    server = app;
+                    storageInstance = serverStorage;
+                    resolve(null);
+                }, useJsonStorage);
+            })
         }
       })
       .then(() => {
@@ -116,7 +113,7 @@ describe("Acquisition Rest API", () => {
   });
 
   after((): Promise<void> => {
-    return q(<void>null)
+    return new Promise(null)
       .then(() => {
         if (storageInstance instanceof JsonStorage) {
           return storageInstance.dropAll();
@@ -131,8 +128,8 @@ describe("Acquisition Rest API", () => {
 
   describe("Get /health", () => {
     it("should be healthy if and only if correctly configured", (done) => {
-      var isProductionReady: boolean = storageInstance instanceof AzureStorage && redisManager && redisManager.isEnabled;
-      var expectedStatusCode: number = isProductionReady || isAzureServer ? 200 : 500;
+      const isProductionReady: boolean = storageInstance instanceof AzureStorage && redisManager && redisManager.isEnabled;
+      const expectedStatusCode: number = isProductionReady || isAzureServer ? 200 : 500;
       request(server || serverUrl)
         .get("/health")
         .expect(expectedStatusCode)
@@ -144,7 +141,7 @@ describe("Acquisition Rest API", () => {
   });
 
   describe("Get /updateCheck", () => {
-    var malformedURL: string = "Malformed URL";
+    const malformedURL: string = "Malformed URL";
 
     beforeEach((done) => {
       requestParameters = <UpdateCheckRequest>{
@@ -264,7 +261,7 @@ describe("Acquisition Rest API", () => {
         .expect(200)
         .end(function (err: any, result: any) {
           if (err) throw err;
-          var response = JSON.parse(result.text);
+          const response = JSON.parse(result.text);
           assert.equal(response.updateInfo.isAvailable, true);
           assert.equal(response.updateInfo.downloadURL, appPackage.blobUrl);
           assert.equal(response.updateInfo.packageSize, 6);
@@ -285,7 +282,7 @@ describe("Acquisition Rest API", () => {
         .expect(200)
         .end(function (err: any, result: any) {
           if (err) throw err;
-          var response = JSON.parse(result.text);
+          const response = JSON.parse(result.text);
           assert.equal(response.updateInfo.isAvailable, true);
           assert.equal(response.updateInfo.downloadURL, appPackage.blobUrl);
           assert.equal(response.updateInfo.packageSize, 6);
@@ -307,7 +304,7 @@ describe("Acquisition Rest API", () => {
         .expect(200)
         .end(function (err: any, result: any) {
           if (err) throw err;
-          var response = JSON.parse(result.text);
+          const response = JSON.parse(result.text);
           // Semver ignores build metadata when matching against ranges
           assert.equal(response.updateInfo.isAvailable, true);
           assert.equal(response.updateInfo.downloadURL, appPackage.blobUrl);
@@ -330,7 +327,7 @@ describe("Acquisition Rest API", () => {
         .expect(200)
         .end(function (err: any, result: any) {
           if (err) throw err;
-          var response = JSON.parse(result.text);
+          const response = JSON.parse(result.text);
           // Semver pre-release tags don't match ranges unless explicitly specified
           assert.equal(response.updateInfo.isAvailable, false);
           assert.equal(response.updateInfo.updateAppVersion, true);
@@ -351,7 +348,7 @@ describe("Acquisition Rest API", () => {
         .expect(200)
         .end(function (err: any, result: any) {
           if (err) throw err;
-          var response = JSON.parse(result.text);
+          const response = JSON.parse(result.text);
           assert.equal(response.updateInfo.isAvailable, true);
           assert.equal(response.updateInfo.downloadURL, appPackage.blobUrl);
           assert.equal(response.updateInfo.packageSize, 6);
@@ -376,7 +373,7 @@ describe("Acquisition Rest API", () => {
         .expect(200)
         .end(function (err: any, result: any) {
           if (err) throw err;
-          var response = JSON.parse(result.text);
+          const response = JSON.parse(result.text);
           assert.equal(response.updateInfo.isAvailable, true);
           assert.equal(response.updateInfo.downloadURL, appPackage.blobUrl);
           assert.equal(response.updateInfo.packageSize, 6);
@@ -401,7 +398,7 @@ describe("Acquisition Rest API", () => {
         .expect(200)
         .end(function (err: any, result: any) {
           if (err) throw err;
-          var response = JSON.parse(result.text);
+          const response = JSON.parse(result.text);
           assert.equal(response.updateInfo.isAvailable, true);
           assert.equal(response.updateInfo.downloadURL, appPackage.diffPackageMap[previousPackageHash].url);
           assert.equal(response.updateInfo.packageSize, 5);
@@ -423,7 +420,7 @@ describe("Acquisition Rest API", () => {
         .expect(200)
         .end(function (err: any, result: any) {
           if (err) throw err;
-          var response = JSON.parse(result.text);
+          const response = JSON.parse(result.text);
           assert.equal(response.updateInfo.isAvailable, true);
           assert.equal(response.updateInfo.downloadURL, appPackage.blobUrl);
           assert.equal(response.updateInfo.packageSize, 6);
@@ -449,7 +446,7 @@ describe("Acquisition Rest API", () => {
         .expect(200)
         .end(function (err: any, result: any) {
           if (err) throw err;
-          var response = JSON.parse(result.text);
+          const response = JSON.parse(result.text);
           assert.equal(response.updateInfo.isAvailable, true);
           assert.equal(response.updateInfo.downloadURL, appPackage.diffPackageMap[previousPackageHash].url);
           assert.equal(response.updateInfo.packageSize, 5);
@@ -475,7 +472,7 @@ describe("Acquisition Rest API", () => {
         .expect(200)
         .end(function (err: any, result: any) {
           if (err) throw err;
-          var response = JSON.parse(result.text);
+          const response = JSON.parse(result.text);
           assert.equal(response.updateInfo.isAvailable, true);
           assert.equal(response.updateInfo.downloadURL, appPackage.blobUrl);
           assert.equal(response.updateInfo.packageSize, 6);
@@ -499,7 +496,7 @@ describe("Acquisition Rest API", () => {
         .expect(200)
         .end(function (err: any, result: any) {
           if (err) throw err;
-          var response = JSON.parse(result.text);
+          const response = JSON.parse(result.text);
           assert.equal(response.updateInfo.isAvailable, false);
           assert.equal(response.updateInfo.updateAppVersion, true);
           assert.equal(response.updateInfo.appVersion, appPackage.appVersion);
@@ -521,7 +518,7 @@ describe("Acquisition Rest API", () => {
         .expect(200)
         .end(function (err: any, result: any) {
           if (err) throw err;
-          var response = JSON.parse(result.text);
+          const response = JSON.parse(result.text);
           assert.equal(response.updateInfo.isAvailable, false);
           assert.equal(response.updateInfo.shouldRunBinaryVersion, true);
           assert.equal(response.updateInfo.updateAppVersion, false);
@@ -543,7 +540,7 @@ describe("Acquisition Rest API", () => {
         .expect(200)
         .end(function (err: any, result: any) {
           if (err) throw err;
-          var response = JSON.parse(result.text);
+          const response = JSON.parse(result.text);
           assert.equal(response.updateInfo.isAvailable, true);
           assert.equal(response.updateInfo.downloadURL, appPackage.blobUrl);
           assert.equal(response.updateInfo.packageSize, 6);
@@ -566,7 +563,7 @@ describe("Acquisition Rest API", () => {
         .expect(200)
         .end(function (err: any, result: any) {
           if (err) throw err;
-          var response = JSON.parse(result.text);
+          const response = JSON.parse(result.text);
           assert.equal(response.updateInfo.isAvailable, false);
           assert.equal(response.updateInfo.updateAppVersion, true);
           assert.equal(response.updateInfo.appVersion, appPackage.appVersion);
@@ -589,7 +586,7 @@ describe("Acquisition Rest API", () => {
         .expect(200)
         .end(function (err: any, result: any) {
           if (err) throw err;
-          var response = JSON.parse(result.text);
+          const response = JSON.parse(result.text);
           assert.equal(response.updateInfo.isAvailable, false);
           assert.equal(response.updateInfo.shouldRunBinaryVersion, true);
           assert.equal(response.updateInfo.updateAppVersion, false);
@@ -614,7 +611,7 @@ describe("Acquisition Rest API", () => {
         .expect(200)
         .end(function (err: any, result: any) {
           if (err) throw err;
-          var response = JSON.parse(result.text);
+          const response = JSON.parse(result.text);
           assert.equal(response.updateInfo.isAvailable, true);
           assert.equal(response.updateInfo.downloadURL, appPackage.blobUrl);
           assert.equal(response.updateInfo.packageSize, 6);
@@ -638,7 +635,7 @@ describe("Acquisition Rest API", () => {
         .expect(200)
         .end(function (err: any, result: any) {
           if (err) throw err;
-          var response = JSON.parse(result.text);
+          const response = JSON.parse(result.text);
           assert.equal(response.updateInfo.isAvailable, true);
           assert.equal(response.updateInfo.downloadURL, appPackage.blobUrl);
           assert.equal(response.updateInfo.packageSize, 6);
@@ -647,10 +644,10 @@ describe("Acquisition Rest API", () => {
     });
 
     describe("Any binary can get an update", () => {
-      var account2: storage.Account;
-      var app2: storage.App;
-      var deployment2: storage.Deployment;
-      var package2: storage.Package;
+      let account2: storage.Account;
+      let app2: storage.App;
+      let deployment2: storage.Deployment;
+      let package2: storage.Package;
 
       before(() => {
         account2 = utils.makeAccount();
@@ -728,7 +725,7 @@ describe("Acquisition Rest API", () => {
           .expect(200)
           .end(function (err: any, result: any) {
             if (err) throw err;
-            var response = JSON.parse(result.text);
+            const response = JSON.parse(result.text);
             assert.equal(response.updateInfo.isAvailable, true);
             assert.equal(response.updateInfo.appVersion, "1.0.0");
             assert.equal(response.updateInfo.isMandatory, true);
@@ -751,7 +748,7 @@ describe("Acquisition Rest API", () => {
           .expect(200)
           .end(function (err: any, result: any) {
             if (err) throw err;
-            var response = JSON.parse(result.text);
+            const response = JSON.parse(result.text);
             assert.equal(response.updateInfo.isAvailable, true);
             assert.equal(response.updateInfo.appVersion, "1.0.0");
             assert.equal(response.updateInfo.isMandatory, true);
@@ -775,7 +772,7 @@ describe("Acquisition Rest API", () => {
           .expect(200)
           .end(function (err: any, result: any) {
             if (err) throw err;
-            var response = JSON.parse(result.text);
+            const response = JSON.parse(result.text);
             assert.equal(response.updateInfo.isAvailable, false);
             assert.equal(response.updateInfo.updateAppVersion, true);
             assert.equal(response.updateInfo.appVersion, "3.0.0");
@@ -799,7 +796,7 @@ describe("Acquisition Rest API", () => {
           .expect(200)
           .end(function (err: any, result: any) {
             if (err) throw err;
-            var response = JSON.parse(result.text);
+            const response = JSON.parse(result.text);
             assert.equal(response.updateInfo.isAvailable, true);
             assert.equal(response.updateInfo.appVersion, "2.0.0");
             assert.equal(response.updateInfo.label, "v6");
@@ -823,7 +820,7 @@ describe("Acquisition Rest API", () => {
           .expect(200)
           .end(function (err: any, result: any) {
             if (err) throw err;
-            var response = JSON.parse(result.text);
+            const response = JSON.parse(result.text);
             assert.equal(response.updateInfo.isAvailable, true);
             assert.equal(response.updateInfo.isMandatory, false);
             assert.equal(response.updateInfo.appVersion, "3.0.0");
@@ -848,7 +845,7 @@ describe("Acquisition Rest API", () => {
           .expect(200)
           .end(function (err: any, result: any) {
             if (err) throw err;
-            var response = JSON.parse(result.text);
+            const response = JSON.parse(result.text);
             assert.equal(response.updateInfo.isAvailable, false);
             assert.equal(response.updateInfo.updateAppVersion, false);
             done();
@@ -857,10 +854,10 @@ describe("Acquisition Rest API", () => {
     });
 
     describe("Updates can target a range of binary versions", () => {
-      var account2: storage.Account;
-      var app2: storage.App;
-      var deployment2: storage.Deployment;
-      var package2: storage.Package;
+      let account2: storage.Account;
+      let app2: storage.App;
+      let deployment2: storage.Deployment;
+      let package2: storage.Package;
 
       before(() => {
         account2 = utils.makeAccount();
@@ -918,7 +915,7 @@ describe("Acquisition Rest API", () => {
           .expect(200)
           .end(function (err: any, result: any) {
             if (err) throw err;
-            var response = JSON.parse(result.text);
+            const response = JSON.parse(result.text);
             assert.equal(response.updateInfo.isAvailable, true);
             assert.equal(response.updateInfo.appVersion, "2.0.0");
             assert.equal(response.updateInfo.isMandatory, false);
@@ -940,7 +937,7 @@ describe("Acquisition Rest API", () => {
           .expect(200)
           .end(function (err: any, result: any) {
             if (err) throw err;
-            var response = JSON.parse(result.text);
+            const response = JSON.parse(result.text);
             assert.equal(response.updateInfo.isAvailable, true);
             assert.equal(response.updateInfo.appVersion, "1.0.1");
             assert.equal(response.updateInfo.isMandatory, true);
@@ -964,7 +961,7 @@ describe("Acquisition Rest API", () => {
           .expect(200)
           .end(function (err: any, result: any) {
             if (err) throw err;
-            var response = JSON.parse(result.text);
+            const response = JSON.parse(result.text);
             assert.equal(response.updateInfo.isAvailable, false);
             assert.equal(response.updateInfo.updateAppVersion, true);
             assert.equal(response.updateInfo.appVersion, ">=1.1.0 <1.2.0");
@@ -987,7 +984,7 @@ describe("Acquisition Rest API", () => {
           .expect(200)
           .end(function (err: any, result: any) {
             if (err) throw err;
-            var response = JSON.parse(result.text);
+            const response = JSON.parse(result.text);
             assert.equal(response.updateInfo.isAvailable, false);
             assert.equal(response.updateInfo.updateAppVersion, false);
             done();
@@ -1010,7 +1007,7 @@ describe("Acquisition Rest API", () => {
           .expect(200)
           .end(function (err: any, result: any) {
             if (err) throw err;
-            var response = JSON.parse(result.text);
+            const response = JSON.parse(result.text);
             assert.equal(response.updateInfo.isAvailable, true);
             assert.equal(response.updateInfo.appVersion, "1.1.5");
             assert.equal(response.updateInfo.label, "v3");
@@ -1020,10 +1017,10 @@ describe("Acquisition Rest API", () => {
     });
 
     describe("Disabled updates are ignored completely", () => {
-      var account2: storage.Account;
-      var app2: storage.App;
-      var deployment2: storage.Deployment;
-      var package2: storage.Package;
+      let account2: storage.Account;
+      let app2: storage.App;
+      let deployment2: storage.Deployment;
+      let package2: storage.Package;
 
       before(() => {
         account2 = utils.makeAccount();
@@ -1092,7 +1089,7 @@ describe("Acquisition Rest API", () => {
           .expect(200)
           .end(function (err: any, result: any) {
             if (err) throw err;
-            var response = JSON.parse(result.text);
+            const response = JSON.parse(result.text);
             assert.equal(response.updateInfo.isAvailable, true);
             assert.equal(response.updateInfo.appVersion, "1.0.0");
             assert.equal(response.updateInfo.isMandatory, true);
@@ -1116,7 +1113,7 @@ describe("Acquisition Rest API", () => {
           .expect(200)
           .end(function (err: any, result: any) {
             if (err) throw err;
-            var response = JSON.parse(result.text);
+            const response = JSON.parse(result.text);
             assert.equal(response.updateInfo.isAvailable, true);
             assert.equal(response.updateInfo.appVersion, requestParameters.appVersion);
             assert.equal(response.updateInfo.isMandatory, false);
@@ -1280,7 +1277,7 @@ describe("Acquisition Rest API", () => {
           });
         }
 
-        return sendReport(
+        sendReport(
           JSON.stringify({
             deploymentKey: deployment.key,
             clientUniqueId: "My iPhone",
@@ -1355,8 +1352,8 @@ describe("Acquisition Rest API", () => {
           });
         }
 
-        var anotherDeployment: storage.Deployment = utils.makeStorageDeployment();
-        return storageInstance
+        const anotherDeployment: storage.Deployment = utils.makeStorageDeployment();
+        storageInstance
           .addDeployment(account.id, app.id, anotherDeployment)
           .then((deploymentId: string) => {
             anotherDeployment.id = deploymentId;
@@ -1418,7 +1415,7 @@ describe("Acquisition Rest API", () => {
           )
           .then(() => {
             if (redisManager.isEnabled) {
-              return redisManager
+              redisManager
                 .getMetricsWithDeploymentKey(deployment.key)
                 .then((metrics: any) => {
                   assert.equal(metrics[redis.Utilities.getLabelActiveCountField("1.0.0")], 1);
