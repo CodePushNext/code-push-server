@@ -12,7 +12,6 @@ import * as errorUtils from "../utils/rest-error-handling";
 import { Request, Response, Router } from "express";
 import * as fs from "fs";
 import * as hashUtils from "../utils/hash-utils";
-import * as q from "q";
 import * as redis from "../redis-manager";
 import * as restTypes from "../types/rest-definitions";
 import * as security from "../utils/security";
@@ -24,7 +23,6 @@ import * as validationUtils from "../utils/validation";
 import PackageDiffer = packageDiffing.PackageDiffer;
 import NameResolver = storageTypes.NameResolver;
 import PackageManifest = hashUtils.PackageManifest;
-import Promise = q.Promise;
 import tryJSON = require("try-json");
 import rateLimit from "express-rate-limit";
 import { isPrototypePollutionKey } from "../storage/storage";
@@ -65,8 +63,7 @@ export function getManagementRouter(config: ManagementConfig): Router {
         const restAccount: restTypes.Account = converterUtils.toRestAccount(storageAccount);
         res.send({ account: restAccount });
       })
-      .catch((error: error.CodePushError) => errorUtils.restErrorHandler(res, error, next))
-      .done();
+      .catch((error: error.CodePushError) => errorUtils.restErrorHandler(res, error, next));
   });
 
   router.get("/accessKeys", (req: Request, res: Response, next: (err?: any) => void): any => {
@@ -88,8 +85,7 @@ export function getManagementRouter(config: ManagementConfig): Router {
 
         res.send({ accessKeys: accessKeys });
       })
-      .catch((error: error.CodePushError) => errorUtils.restErrorHandler(res, error, next))
-      .done();
+      .catch((error: error.CodePushError) => errorUtils.restErrorHandler(res, error, next));
   });
 
   router.post("/accessKeys", (req: Request, res: Response, next: (err?: any) => void): any => {
@@ -136,8 +132,7 @@ export function getManagementRouter(config: ManagementConfig): Router {
           res.status(201).send({ accessKey: accessKey });
         });
       })
-      .catch((error: error.CodePushError) => errorUtils.restErrorHandler(res, error, next))
-      .done();
+      .catch((error: error.CodePushError) => errorUtils.restErrorHandler(res, error, next));
   });
 
   router.get("/accessKeys/:accessKeyName", (req: Request, res: Response, next: (err?: any) => void): any => {
@@ -150,8 +145,7 @@ export function getManagementRouter(config: ManagementConfig): Router {
         delete accessKey.name;
         res.send({ accessKey: accessKey });
       })
-      .catch((error: error.CodePushError) => errorUtils.restErrorHandler(res, error, next))
-      .done();
+      .catch((error: error.CodePushError) => errorUtils.restErrorHandler(res, error, next));
   });
 
   router.patch("/accessKeys/:accessKeyName", (req: Request, res: Response, next: (err?: any) => void): any => {
@@ -199,8 +193,7 @@ export function getManagementRouter(config: ManagementConfig): Router {
         delete updatedAccessKey.name;
         res.send({ accessKey: updatedAccessKey });
       })
-      .catch((error: error.CodePushError) => errorUtils.restErrorHandler(res, error, next))
-      .done();
+      .catch((error: error.CodePushError) => errorUtils.restErrorHandler(res, error, next));
   });
 
   router.delete("/accessKeys/:accessKeyName", (req: Request, res: Response, next: (err?: any) => void): any => {
@@ -215,8 +208,7 @@ export function getManagementRouter(config: ManagementConfig): Router {
       .then((): void => {
         res.sendStatus(204);
       })
-      .catch((error: error.CodePushError) => errorUtils.restErrorHandler(res, error, next))
-      .done();
+      .catch((error: error.CodePushError) => errorUtils.restErrorHandler(res, error, next));
   });
 
   router.delete("/sessions/:createdBy", (req: Request, res: Response, next: (err?: any) => void): any => {
@@ -234,7 +226,7 @@ export function getManagementRouter(config: ManagementConfig): Router {
         });
 
         if (accessKeyDeletionPromises.length) {
-          return q.all(accessKeyDeletionPromises);
+          return Promise.all(accessKeyDeletionPromises);
         } else {
           throw errorUtils.restError(errorUtils.ErrorCode.NotFound, `There are no sessions associated with "${createdBy}."`);
         }
@@ -242,8 +234,7 @@ export function getManagementRouter(config: ManagementConfig): Router {
       .then((): void => {
         res.sendStatus(204);
       })
-      .catch((error: error.CodePushError) => errorUtils.restErrorHandler(res, error, next))
-      .done();
+      .catch((error: error.CodePushError) => errorUtils.restErrorHandler(res, error, next));
   });
 
   router.get("/apps", (req: Request, res: Response, next: (err?: any) => void): any => {
@@ -258,13 +249,12 @@ export function getManagementRouter(config: ManagementConfig): Router {
           });
         });
 
-        return q.all(restAppPromises);
+        return Promise.all(restAppPromises);
       })
       .then((restApps: restTypes.App[]) => {
         res.send({ apps: converterUtils.sortAndUpdateDisplayNameOfRestAppsList(restApps) });
       })
-      .catch((error: error.CodePushError) => errorUtils.restErrorHandler(res, error, next))
-      .done();
+      .catch((error: error.CodePushError) => errorUtils.restErrorHandler(res, error, next));
   });
 
   router.post("/apps", (req: Request, res: Response, next: (err?: any) => void): any => {
@@ -303,7 +293,7 @@ export function getManagementRouter(config: ManagementConfig): Router {
                   });
                 });
 
-                return q.all(deploymentPromises);
+                return Promise.all(deploymentPromises);
               }
             })
             .then((deploymentNames: string[]): void => {
@@ -311,8 +301,7 @@ export function getManagementRouter(config: ManagementConfig): Router {
               res.status(201).send({ app: converterUtils.toRestApp(storageApp, /*displayName=*/ storageApp.name, deploymentNames) });
             });
         })
-        .catch((error: error.CodePushError) => errorUtils.restErrorHandler(res, error, next))
-        .done();
+        .catch((error: error.CodePushError) => errorUtils.restErrorHandler(res, error, next));
     }
   });
 
@@ -330,8 +319,7 @@ export function getManagementRouter(config: ManagementConfig): Router {
         const deploymentNames: string[] = deployments.map((deployment) => deployment.name);
         res.send({ app: converterUtils.toRestApp(storageApp, /*displayName=*/ appName, deploymentNames) });
       })
-      .catch((error: error.CodePushError) => errorUtils.restErrorHandler(res, error, next))
-      .done();
+      .catch((error: error.CodePushError) => errorUtils.restErrorHandler(res, error, next));
   });
 
   router.delete("/apps/:appName", (req: Request, res: Response, next: (err?: any) => void): any => {
@@ -352,7 +340,7 @@ export function getManagementRouter(config: ManagementConfig): Router {
           return invalidateCachedPackage(deployment.key);
         });
 
-        return q.all(invalidationPromises).catch((error: Error) => {
+        return Promise.all(invalidationPromises).catch((error: Error) => {
           invalidationError = error; // Do not block app deletion on cache invalidation
         });
       })
@@ -363,8 +351,7 @@ export function getManagementRouter(config: ManagementConfig): Router {
         res.sendStatus(204);
         if (invalidationError) throw invalidationError;
       })
-      .catch((error: error.CodePushError) => errorUtils.restErrorHandler(res, error, next))
-      .done();
+      .catch((error: error.CodePushError) => errorUtils.restErrorHandler(res, error, next));
   });
 
   router.patch("/apps/:appName", (req: Request, res: Response, next: (err?: any) => void): any => {
@@ -410,8 +397,7 @@ export function getManagementRouter(config: ManagementConfig): Router {
             });
         }
       })
-      .catch((error: error.CodePushError) => errorUtils.restErrorHandler(res, error, next))
-      .done();
+      .catch((error: error.CodePushError) => errorUtils.restErrorHandler(res, error, next));
   });
 
   router.post("/apps/:appName/transfer/:email", (req: Request, res: Response, next: (err?: any) => void): any => {
@@ -432,8 +418,7 @@ export function getManagementRouter(config: ManagementConfig): Router {
       .then(() => {
         res.sendStatus(201);
       })
-      .catch((error: error.CodePushError) => errorUtils.restErrorHandler(res, error, next))
-      .done();
+      .catch((error: error.CodePushError) => errorUtils.restErrorHandler(res, error, next));
   });
 
   router.post("/apps/:appName/collaborators/:email", (req: Request, res: Response, next: (err?: any) => void): any => {
@@ -454,8 +439,7 @@ export function getManagementRouter(config: ManagementConfig): Router {
       .then(() => {
         res.sendStatus(201);
       })
-      .catch((error: error.CodePushError) => errorUtils.restErrorHandler(res, error, next))
-      .done();
+      .catch((error: error.CodePushError) => errorUtils.restErrorHandler(res, error, next));
   });
 
   router.get("/apps/:appName/collaborators", (req: Request, res: Response, next: (err?: any) => void): any => {
@@ -471,8 +455,7 @@ export function getManagementRouter(config: ManagementConfig): Router {
       .then((retrievedMap: storageTypes.CollaboratorMap) => {
         res.send({ collaborators: converterUtils.toRestCollaboratorMap(retrievedMap) });
       })
-      .catch((error: error.CodePushError) => errorUtils.restErrorHandler(res, error, next))
-      .done();
+      .catch((error: error.CodePushError) => errorUtils.restErrorHandler(res, error, next));
   });
 
   router.delete("/apps/:appName/collaborators/:email", (req: Request, res: Response, next: (err?: any) => void): any => {
@@ -498,8 +481,7 @@ export function getManagementRouter(config: ManagementConfig): Router {
       .then(() => {
         res.sendStatus(204);
       })
-      .catch((error: error.CodePushError) => errorUtils.restErrorHandler(res, error, next))
-      .done();
+      .catch((error: error.CodePushError) => errorUtils.restErrorHandler(res, error, next));
   });
 
   router.get("/apps/:appName/deployments", (req: Request, res: Response, next: (err?: any) => void): any => {
@@ -521,8 +503,7 @@ export function getManagementRouter(config: ManagementConfig): Router {
 
         res.send({ deployments: deployments });
       })
-      .catch((error: error.CodePushError) => errorUtils.restErrorHandler(res, error, next))
-      .done();
+      .catch((error: error.CodePushError) => errorUtils.restErrorHandler(res, error, next));
   });
 
   router.post("/apps/:appName/deployments", (req: Request, res: Response, next: (err?: any) => void): any => {
@@ -560,8 +541,7 @@ export function getManagementRouter(config: ManagementConfig): Router {
           res.status(201).send({ deployment: restDeployment });
         });
       })
-      .catch((error: error.CodePushError) => errorUtils.restErrorHandler(res, error, next))
-      .done();
+      .catch((error: error.CodePushError) => errorUtils.restErrorHandler(res, error, next));
   });
 
   router.get("/apps/:appName/deployments/:deploymentName", (req: Request, res: Response, next: (err?: any) => void): any => {
@@ -581,8 +561,7 @@ export function getManagementRouter(config: ManagementConfig): Router {
         const restDeployment: restTypes.Deployment = converterUtils.toRestDeployment(deployment);
         res.send({ deployment: restDeployment });
       })
-      .catch((error: error.CodePushError) => errorUtils.restErrorHandler(res, error, next))
-      .done();
+      .catch((error: error.CodePushError) => errorUtils.restErrorHandler(res, error, next));
   });
 
   router.delete("/apps/:appName/deployments/:deploymentName", (req: Request, res: Response, next: (err?: any) => void): any => {
@@ -609,8 +588,7 @@ export function getManagementRouter(config: ManagementConfig): Router {
       .then(() => {
         res.sendStatus(204);
       })
-      .catch((error: error.CodePushError) => errorUtils.restErrorHandler(res, error, next))
-      .done();
+      .catch((error: error.CodePushError) => errorUtils.restErrorHandler(res, error, next));
   });
 
   router.patch("/apps/:appName/deployments/:deploymentName", (req: Request, res: Response, next: (err?: any) => void): any => {
@@ -654,8 +632,7 @@ export function getManagementRouter(config: ManagementConfig): Router {
           res.send({ deployment: restDeployment });
         });
       })
-      .catch((error: error.CodePushError) => errorUtils.restErrorHandler(res, error, next))
-      .done();
+      .catch((error: error.CodePushError) => errorUtils.restErrorHandler(res, error, next));
   });
 
   router.patch("/apps/:appName/deployments/:deploymentName/release", (req: Request, res: Response, next: (err?: any) => void): any => {
@@ -751,8 +728,7 @@ export function getManagementRouter(config: ManagementConfig): Router {
           res.sendStatus(204);
         }
       })
-      .catch((error: error.CodePushError) => errorUtils.restErrorHandler(res, error, next))
-      .done();
+      .catch((error: error.CodePushError) => errorUtils.restErrorHandler(res, error, next));
   });
 
   const releaseRateLimiter = rateLimit({
@@ -854,14 +830,14 @@ export function getManagementRouter(config: ManagementConfig): Router {
             return storage.addBlob(security.generateSecureKey(accountId), readStream, json.length);
           }
 
-          return q(<string>null);
+          return null;
         })
         .then((blobId?: string) => {
           if (blobId) {
             return storage.getBlobUrl(blobId);
           }
 
-          return q(<string>null);
+          return null;
         })
         .then((manifestBlobUrl?: string) => {
           storagePackage = converterUtils.toStoragePackage(restPackage);
@@ -891,8 +867,7 @@ export function getManagementRouter(config: ManagementConfig): Router {
             }
           });
         })
-        .catch((error: error.CodePushError) => errorUtils.restErrorHandler(res, error, next))
-        .done();
+        .catch((error: error.CodePushError) => errorUtils.restErrorHandler(res, error, next));
     });
   });
 
@@ -920,15 +895,14 @@ export function getManagementRouter(config: ManagementConfig): Router {
           if (redisManager.isEnabled) {
             return redisManager.clearMetricsForDeploymentKey(deploymentToGetHistoryOf.key);
           } else {
-            return q(<void>null);
+            return null;
           }
         })
         .then(() => {
           res.sendStatus(204);
           return invalidateCachedPackage(deploymentToGetHistoryOf.key);
         })
-        .catch((error: error.CodePushError) => errorUtils.restErrorHandler(res, error, next))
-        .done();
+        .catch((error: error.CodePushError) => errorUtils.restErrorHandler(res, error, next));
     }
   );
 
@@ -951,8 +925,7 @@ export function getManagementRouter(config: ManagementConfig): Router {
       .then((packageHistory: storageTypes.Package[]) => {
         res.send({ history: packageHistory });
       })
-      .catch((error: error.CodePushError) => errorUtils.restErrorHandler(res, error, next))
-      .done();
+      .catch((error: error.CodePushError) => errorUtils.restErrorHandler(res, error, next));
   });
 
   router.get("/apps/:appName/deployments/:deploymentName/metrics", (req: Request, res: Response, next: (err?: any) => void): any => {
@@ -972,14 +945,14 @@ export function getManagementRouter(config: ManagementConfig): Router {
           return nameResolver.resolveDeployment(accountId, appId, deploymentName);
         })
         .then((deployment: storageTypes.Deployment): Promise<redis.DeploymentMetrics> => {
+            // @ts-ignore
           return redisManager.getMetricsWithDeploymentKey(deployment.key);
         })
         .then((metrics: redis.DeploymentMetrics) => {
           const deploymentMetrics: restTypes.DeploymentMetrics = converterUtils.toRestDeploymentMetrics(metrics);
           res.send({ metrics: deploymentMetrics });
         })
-        .catch((error: error.CodePushError) => errorUtils.restErrorHandler(res, error, next))
-        .done();
+        .catch((error: error.CodePushError) => errorUtils.restErrorHandler(res, error, next));
     }
   });
 
@@ -1007,12 +980,12 @@ export function getManagementRouter(config: ManagementConfig): Router {
           appId = app.id;
           throwIfInvalidPermissions(app, storageTypes.Permissions.Collaborator);
           // Get source and dest manifests in parallel.
-          return q.all([
+          return Promise.all([
             nameResolver.resolveDeployment(accountId, appId, sourceDeploymentName),
             nameResolver.resolveDeployment(accountId, appId, destDeploymentName),
           ]);
         })
-        .spread((sourceDeployment: storageTypes.Deployment, destinationDeployment: storageTypes.Deployment) => {
+        .then(([sourceDeployment, destinationDeployment]) => {
           destDeployment = destinationDeployment;
 
           if (info.label) {
@@ -1078,8 +1051,7 @@ export function getManagementRouter(config: ManagementConfig): Router {
             })
             .then(() => processDiff(accountId, appId, destDeployment.id, sourcePackage));
         })
-        .catch((error: error.CodePushError) => errorUtils.restErrorHandler(res, error, next))
-        .done();
+        .catch((error: error.CodePushError) => errorUtils.restErrorHandler(res, error, next));
     }
   );
 
@@ -1174,12 +1146,12 @@ export function getManagementRouter(config: ManagementConfig): Router {
             return invalidateCachedPackage(deploymentToRollback.key);
           });
         })
-        .catch((error: error.CodePushError) => errorUtils.restErrorHandler(res, error, next))
-        .done();
+        .catch((error: error.CodePushError) => errorUtils.restErrorHandler(res, error, next));
     }
   );
 
-  function invalidateCachedPackage(deploymentKey: string): Q.Promise<void> {
+  function invalidateCachedPackage(deploymentKey: string): Promise<void> {
+      // @ts-ignore
     return redisManager.invalidateCache(redis.Utilities.getDeploymentKeyHash(deploymentKey));
   }
 
@@ -1285,12 +1257,12 @@ export function getManagementRouter(config: ManagementConfig): Router {
       .catch(diffErrorUtils.diffErrorHandler);
   }
 
-  function processDiff(accountId: string, appId: string, deploymentId: string, appPackage: storageTypes.Package): q.Promise<void> {
+  async function processDiff(accountId: string, appId: string, deploymentId: string, appPackage: storageTypes.Package): Promise<void> {
     if (!appPackage.manifestBlobUrl || process.env.ENABLE_PACKAGE_DIFFING) {
       // No need to process diff because either:
       //   1. The release just contains a single file.
       //   2. Diffing disabled.
-      return q(<void>null);
+      return null;
     }
 
     console.log(`Processing package: ${appPackage.label}`);

@@ -3,9 +3,8 @@
 
 import * as assert from "assert";
 import * as express from "express";
-import * as q from "q";
+import * as Promise from 'bluebird';
 import * as shortid from "shortid";
-import Promise = q.Promise;
 
 import { RedisManager, CacheableResponse } from "../script/redis-manager";
 
@@ -48,7 +47,7 @@ function redisTests() {
     body: "",
   };
   var responseGenerator = (): Promise<CacheableResponse | void> => {
-    return q(expectedResponse);
+    return Promise.resolve(expectedResponse);
   };
 
   after(() => {

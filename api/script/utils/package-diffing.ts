@@ -6,7 +6,6 @@ import * as env from "../environment";
 import * as fs from "fs";
 import * as hashUtils from "../utils/hash-utils";
 import * as path from "path";
-import * as q from "q";
 import * as security from "../utils/security";
 import * as semver from "semver";
 import * as storageTypes from "../storage/storage";
@@ -16,8 +15,8 @@ import * as superagent from "superagent";
 import * as yazl from "yazl";
 import * as yauzl from "yauzl";
 import PackageManifest = hashUtils.PackageManifest;
-import Promise = q.Promise;
 import request = require("superagent");
+import * as BPromise from 'bluebird'
 
 interface IArchiveDiff {
   deletedFiles: string[];
@@ -49,7 +48,7 @@ export class PackageDiffer {
     newPackage: storageTypes.Package
   ): Promise<storageTypes.PackageHashToBlobInfoMap> {
     if (!newPackage || !newPackage.blobUrl || !newPackage.manifestBlobUrl) {
-      return q.reject<storageTypes.PackageHashToBlobInfoMap>(
+      return Promise.reject<storageTypes.PackageHashToBlobInfoMap>(
         diffErrorUtils.diffError(diffErrorUtils.ErrorCode.InvalidArguments, "Package information missing")
       );
     }
@@ -59,9 +58,9 @@ export class PackageDiffer {
     const newReleaseFilePromise: Promise<string> = this.downloadArchiveFromUrl(newPackage.blobUrl);
     let newFilePath: string;
 
-    return q
-      .all<any>([manifestPromise, historyPromise, newReleaseFilePromise])
-      .spread((newManifest: PackageManifest, history: storageTypes.Package[], downloadedArchiveFile: string) => {
+    return Promise
+      .all([manifestPromise, historyPromise, newReleaseFilePromise])
+      .then(([newManifest, history, downloadedArchiveFile]) => {
         newFilePath = downloadedArchiveFile;
         const packagesToDiff: storageTypes.Package[] = this.getPackagesToDiff(
           history,
@@ -78,7 +77,7 @@ export class PackageDiffer {
           });
         }
 
-        return q.all(diffBlobInfoPromises);
+        return Promise.all(diffBlobInfoPromises);
       })
       .then((diffBlobInfoList: DiffBlobInfo[]) => {
         // all done, delete the downloaded archive file.
@@ -95,14 +94,14 @@ export class PackageDiffer {
 
           return diffPackageMap;
         } else {
-          return q<storageTypes.PackageHashToBlobInfoMap>(null);
+          return null;
         }
       })
       .catch(diffErrorUtils.diffErrorHandler);
   }
 
-  public generateDiffArchive(oldManifest: PackageManifest, newManifest: PackageManifest, newArchiveFilePath: string): Promise<string> {
-    return Promise<string>(
+  public async generateDiffArchive(oldManifest: PackageManifest, newManifest: PackageManifest, newArchiveFilePath: string): Promise<string> {
+    return new BPromise<string>(
       (resolve, reject): void => {
         if (!oldManifest || !newManifest) {
           resolve(null);
@@ -197,8 +196,11 @@ export class PackageDiffer {
   }
 
   private uploadDiffArchiveBlob(blobId: string, diffArchiveFilePath: string): Promise<storageTypes.BlobInfo> {
-    return Promise<storageTypes.BlobInfo>(
-      (resolve, reject): void => {
+    return new BPromise<storageTypes.BlobInfo>(
+      (
+        resolve,
+        reject
+      ): void => {
         fs.stat(diffArchiveFilePath, (err: NodeJS.ErrnoException, stats: fs.Stats): void => {
           if (err) {
             reject(err);
@@ -225,14 +227,13 @@ export class PackageDiffer {
             })
             .catch((): void => {
               resolve(null);
-            })
-            .done();
+            });
         });
       }
     );
   }
 
-  private uploadAndGetDiffBlobInfo(
+  private async uploadAndGetDiffBlobInfo(
     accountId: string,
     appPackage: storageTypes.Package,
     newPackageHash: string,
@@ -241,7 +242,7 @@ export class PackageDiffer {
   ): Promise<DiffBlobInfo> {
     if (!appPackage || appPackage.packageHash === newPackageHash) {
       // If the packageHash matches, no need to calculate diff, its the same package.
-      return q<DiffBlobInfo>(null);
+      return null;
     }
 
     return this.getManifest(appPackage)
@@ -253,19 +254,19 @@ export class PackageDiffer {
           return this.uploadDiffArchiveBlob(security.generateSecureKey(accountId), diffArchiveFilePath);
         }
 
-        return q(<storageTypes.BlobInfo>null);
+        return null;
       })
       .then((blobInfo: storageTypes.BlobInfo) => {
         if (blobInfo) {
           return { packageHash: appPackage.packageHash, blobInfo: blobInfo };
         } else {
-          return q<DiffBlobInfo>(null);
+          return null;
         }
       });
   }
 
   private getManifest(appPackage: storageTypes.Package): Promise<PackageManifest> {
-    return Promise<PackageManifest>(
+    return new BPromise<PackageManifest>(
       (resolve): void => {
         if (!appPackage || !appPackage.manifestBlobUrl) {
           resolve(null);
@@ -291,7 +292,7 @@ export class PackageDiffer {
   }
 
   private downloadArchiveFromUrl(url: string): Promise<string> {
-    return Promise<string>(
+    return new BPromise<string>(
       (resolve): void => {
         PackageDiffer.ensureWorkDirectoryExists();
 

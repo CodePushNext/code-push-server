@@ -3,15 +3,13 @@
 
 import * as assert from "assert";
 import * as express from "express";
-import * as q from "q";
 import * as queryString from "querystring";
 import * as request from "supertest";
-import Promise = q.Promise;
-
 import * as defaultServer from "../script/default-server";
 import * as storage from "../script/storage/storage";
 import * as redis from "../script/redis-manager";
 import * as utils from "./utils";
+import * as Promise from "bluebird";
 
 import { AzureStorage } from "../script/storage/azure-storage";
 import { JsonStorage } from "../script/storage/json-storage";
@@ -31,31 +29,25 @@ describe("Acquisition Rest API", () => {
   let redisManager: redis.RedisManager;
   let isAzureServer: boolean;
 
-  before((): q.Promise<void> => {
+  before((): Promise<void> => {
     const useJsonStorage: boolean = !process.env.TEST_AZURE_STORAGE && !process.env.AZURE_ACQUISITION_URL;
 
-    return q<void>(null)
-      .then(() => {
+    return new Promise((resolve, reject) => {
         if (process.env.AZURE_ACQUISITION_URL) {
-          serverUrl = process.env.AZURE_ACQUISITION_URL;
-          isAzureServer = true;
-          storageInstance = useJsonStorage ? new JsonStorage() : new AzureStorage();
+            serverUrl = process.env.AZURE_ACQUISITION_URL;
+            isAzureServer = true;
+            storageInstance = useJsonStorage ? new JsonStorage() : new AzureStorage();
         } else {
-          const deferred: q.Deferred<void> = q.defer<void>();
-
-          defaultServer.start(function (err: Error, app: express.Express, serverStorage: storage.Storage) {
-            if (err) {
-              deferred.reject(err);
-            }
-
-            server = app;
-            storageInstance = serverStorage;
-            deferred.resolve(null);
-          }, useJsonStorage);
-
-          return deferred.promise;
+            defaultServer.start(function (err: Error, app: express.Express, serverStorage: storage.Storage) {
+                if (err) {
+                    reject(err);
+                }
+                server = app;
+                storageInstance = serverStorage;
+                resolve(null);
+            }, useJsonStorage);
         }
-      })
+    })
       .then(() => {
         account = utils.makeAccount();
         return storageInstance.addAccount(account);
@@ -118,7 +110,7 @@ describe("Acquisition Rest API", () => {
   });
 
   after((): Promise<void> => {
-    return q(<void>null)
+    return new Promise(null)
       .then(() => {
         if (storageInstance instanceof JsonStorage) {
           return storageInstance.dropAll();
@@ -1266,7 +1258,7 @@ describe("Acquisition Rest API", () => {
 
       it("returns 200 and increments the correct counters in Redis if SDK version is unspecified", (done) => {
         function sendReport(statusReport: string): Promise<void> {
-          return Promise<void>((resolve, reject) => {
+          return new Promise<void>((resolve, reject) => {
             request(server || serverUrl)
               .post("/reportStatus/deploy")
               .set("Content-Type", "application/json")
@@ -1340,7 +1332,7 @@ describe("Acquisition Rest API", () => {
 
       it("returns 200 and increments the correct counters in Redis when switching deployment keys if SDK version is >=1.5.2-beta", (done) => {
         function sendReport(statusReport: string): Promise<void> {
-          return Promise<void>((resolve, reject) => {
+          return new Promise<void>((resolve, reject) => {
             request(server || serverUrl)
               .post("/reportStatus/deploy")
               .set("Content-Type", "application/json")

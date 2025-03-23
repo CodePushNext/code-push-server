@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="cd3ce01d-5235-4341-a93a-e6ca5a0b1665" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/api/.env.example" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/api/.mocharc.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/api/ENVIRONMENT.md" beforeDir="false" afterPath="$PROJECT_DIR$/api/ENVIRONMENT.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/api/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/api/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/api/SECURITY.md" beforeDir="false" afterPath="$PROJECT_DIR$/api/SECURITY.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/api/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/api/package-lock.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/api/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/api/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/api/script/default-server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/api/script/default-server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/api/script/file-upload-manager.ts" beforeDir="false" afterPath="$PROJECT_DIR$/api/script/file-upload-manager.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/api/script/routes/acquisition.ts" beforeDir="false" afterPath="$PROJECT_DIR$/api/script/routes/acquisition.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/api/script/routes/passport-authentication.ts" beforeDir="false" afterPath="$PROJECT_DIR$/api/script/routes/passport-authentication.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/api/script/storage/json-storage.ts" beforeDir="false" afterPath="$PROJECT_DIR$/api/script/storage/json-storage.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/api/script/types/express.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/api/script/utils/hash-utils.ts" beforeDir="false" afterPath="$PROJECT_DIR$/api/script/utils/hash-utils.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/api/script/utils/package-diffing.ts" beforeDir="false" afterPath="$PROJECT_DIR$/api/script/utils/package-diffing.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/api/test/acquisition.ts" beforeDir="false" afterPath="$PROJECT_DIR$/api/test/acquisition.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/api/test/management.ts" beforeDir="false" afterPath="$PROJECT_DIR$/api/test/management.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/api/test/package-diffing.ts" beforeDir="false" afterPath="$PROJECT_DIR$/api/test/package-diffing.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/api/test/storage.ts" beforeDir="false" afterPath="$PROJECT_DIR$/api/test/storage.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/api/test/utils.ts" beforeDir="false" afterPath="$PROJECT_DIR$/api/test/utils.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cli/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/cli/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cli/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/cli/package-lock.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cli/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/cli/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cli/script/command-executor.ts" beforeDir="false" afterPath="$PROJECT_DIR$/cli/script/command-executor.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cli/script/command-parser.ts" beforeDir="false" afterPath="$PROJECT_DIR$/cli/script/command-parser.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cli/script/management-sdk.ts" beforeDir="false" afterPath="$PROJECT_DIR$/cli/script/management-sdk.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cli/script/react-native-utils.ts" beforeDir="false" afterPath="$PROJECT_DIR$/cli/script/react-native-utils.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cli/script/types/cli.ts" beforeDir="false" afterPath="$PROJECT_DIR$/cli/script/types/cli.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cli/script/utils/file-utils.ts" beforeDir="false" afterPath="$PROJECT_DIR$/cli/script/utils/file-utils.ts" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="TypeScript File" />
+      </list>
+    </option>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="GitHubPullRequestSearchHistory">{
+  &quot;lastFilter&quot;: {
+    &quot;state&quot;: &quot;OPEN&quot;,
+    &quot;assignee&quot;: &quot;CHOIMINSEOK&quot;
+  }
+}</component>
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;https://github.com/CodePushNext/code-push-server.git&quot;,
+    &quot;accountId&quot;: &quot;a0c10af7-62d1-4c79-ab06-2873c65f2eb1&quot;
+  }
+}</component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 0
+}</component>
+  <component name="ProjectId" id="2t6gFszOgHA2IaoxynkZVM1Am9I" />
+  <component name="ProjectViewState">
+    <option name="autoscrollFromSource" value="true" />
+    <option name="autoscrollToSource" value="true" />
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="openDirectoriesWithSingleClick" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;#2 on Merging aws-aupport&quot;,
+    &quot;last_opened_file_path&quot;: &quot;/Users/cms3718/code-push-server&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;prettierjs.PrettierConfiguration.Package&quot;: &quot;/Users/cms3718/code-push-server/api/node_modules/prettier&quot;,
+    &quot;ts.external.directory.path&quot;: &quot;/Users/cms3718/code-push-server/api/node_modules/typescript/lib&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  }
+}</component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-js-predefined-d6986cc7102b-deb605915726-JavaScript-WS-243.22562.222" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="cd3ce01d-5235-4341-a93a-e6ca5a0b1665" name="Changes" comment="" />
+      <created>1739677838020</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1739677838020</updated>
+      <workItem from="1739677839299" duration="13905000" />
+      <workItem from="1740796029829" duration="1481000" />
+      <workItem from="1740804811572" duration="793000" />
+      <workItem from="1740806263193" duration="29000" />
+      <workItem from="1740806307983" duration="587000" />
+      <workItem from="1740809929826" duration="398000" />
+      <workItem from="1742116217004" duration="3923000" />
+      <workItem from="1742702825838" duration="191000" />
+      <workItem from="1742703031119" duration="3455000" />
+    </task>
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+</project>

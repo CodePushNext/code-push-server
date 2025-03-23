@@ -3,14 +3,12 @@
 
 import * as assert from "assert";
 import * as shortid from "shortid";
-import * as q from "q";
+import * as Promise from "bluebird";
 
 import { AzureStorage } from "../script/storage/azure-storage";
 import { JsonStorage } from "../script/storage/json-storage";
 import * as storageTypes from "../script/storage/storage";
 import * as utils from "./utils";
-
-import Promise = q.Promise;
 
 describe("JSON Storage", () => storageTests(JsonStorage));
 
@@ -35,7 +33,7 @@ function storageTests(StorageType: new (...args: any[]) => storageTypes.Storage,
 
   afterEach((): void => {
     if (storage instanceof JsonStorage) {
-      storage.dropAll().done();
+      storage.dropAll();
     }
   });
 
