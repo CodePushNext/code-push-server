@@ -47,6 +47,7 @@ export class PackageDiffer {
     newPackage: storageTypes.Package
   ): Promise<storageTypes.PackageHashToBlobInfoMap> {
     if (!newPackage || !newPackage.blobUrl || !newPackage.manifestBlobUrl) {
+      console.log(`Package information missing`);
       return Promise.reject<storageTypes.PackageHashToBlobInfoMap>(
         diffErrorUtils.diffError(diffErrorUtils.ErrorCode.InvalidArguments, "Package information missing")
       );
@@ -66,6 +67,7 @@ export class PackageDiffer {
           newPackage.packageHash,
           newPackage.label
         );
+        
         const diffBlobInfoPromises: Promise<DiffBlobInfo>[] = [];
         if (packagesToDiff) {
           packagesToDiff.forEach((appPackage: storageTypes.Package) => {
@@ -167,7 +169,7 @@ export class PackageDiffer {
                     readStreamCounter--;
                     if (readStreamCounter === 0 && !readStreamError) {
                       // All read streams have completed successfully
-                      // diffFile.end();
+                      diffFile.end();
                     }
                   });
 
@@ -304,7 +306,7 @@ export class PackageDiffer {
     newPackageLabel: string
   ): storageTypes.Package[] {
     if (!history || !history.length) {
-      return null;
+      return [];
     }
 
     // We assume that the new package has been released and already is in history.
